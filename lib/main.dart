@@ -14,7 +14,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   final AuthService authService;
 
-  const MyApp({Key? key, required this.authService}) : super(key: key);
+  const MyApp({super.key, required this.authService});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,21 @@ class MyApp extends StatelessWidget {
       title: 'FitTrack',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        scaffoldBackgroundColor: Colors.grey[50],
+        appBarTheme: AppBarTheme(
+          elevation: 0,
+          backgroundColor: Colors.grey[50],
+          iconTheme: const IconThemeData(color: Colors.black),
+          titleTextStyle: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          selectedItemColor: Colors.blue,
+          unselectedItemColor: Colors.grey,
+        ),
       ),
       home: LoginScreen(authService: authService),
     );

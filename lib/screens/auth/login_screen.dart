@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:fit_track/services/auth_service.dart';
+import '../home/main_app.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final AuthService authService;
 
-  const LoginScreen({Key? key, required this.authService}) : super(key: key);
+  const LoginScreen({super.key, required this.authService});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -29,9 +30,11 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (user != null) {
-        // Navigate to home screen (we'll implement this later)
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MainApp(user: user),
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
