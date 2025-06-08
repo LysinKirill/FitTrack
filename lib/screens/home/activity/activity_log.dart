@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ActivityLogScreen extends StatelessWidget {
-  const ActivityLogScreen({super.key});
-
+  final int userId;
+  const ActivityLogScreen({super.key, required this.userId});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

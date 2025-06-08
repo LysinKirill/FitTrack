@@ -18,13 +18,18 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const DashboardScreen(),
-    const FoodDiaryScreen(),
-    const ActivityLogScreen(),
-    const ProgressChartsScreen(),
-  ];
+  late final List<Widget> _screens;
 
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      DashboardScreen(userId: widget.user.id!),
+      FoodDiaryScreen(userId: widget.user.id!),
+      ActivityLogScreen(userId: widget.user.id!),
+      ProgressChartsScreen(userId: widget.user.id!),
+    ];
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(

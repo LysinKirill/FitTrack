@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class FoodDiaryScreen extends StatelessWidget {
-  const FoodDiaryScreen({super.key});
+  final int userId;
+  const FoodDiaryScreen({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {

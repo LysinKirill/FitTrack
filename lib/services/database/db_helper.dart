@@ -22,14 +22,20 @@ class DatabaseHelper {
 
   Future _createDB(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        created_at TEXT NOT NULL
-      )
-    ''');
+    CREATE TABLE users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      birth_date TEXT,
+      height REAL,
+      weight REAL,
+      gender TEXT default 'other',
+      daily_calorie_goal INTEGER NOT NULL,
+      daily_water_goal INTEGER NOT NULL
+    )
+  ''');
   }
 
   Future close() async {

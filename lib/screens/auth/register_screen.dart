@@ -1,12 +1,14 @@
+import 'package:fit_track/screens/auth/profile_completion_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:fit_track/services/auth_service.dart';
 
 import '../../models/user.dart';
+import '../home/main_app.dart';
 
 class RegisterScreen extends StatefulWidget {
   final AuthService authService;
 
-  const RegisterScreen({Key? key, required this.authService}) : super(key: key);
+  const RegisterScreen({super.key, required this.authService});
 
   @override
   _RegisterScreenState createState() => _RegisterScreenState();
@@ -19,6 +21,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
+
+  final _heightController = TextEditingController();
+  final _weightController = TextEditingController();
+  final _birthDateController = TextEditingController();
+  DateTime? _selectedBirthDate;
+
 
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
@@ -45,16 +53,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
         email: _emailController.text,
         password: _passwordController.text,
         createdAt: DateTime.now(),
+        height: _heightController.text.isNotEmpty
+            ? double.parse(_heightController.text)
+            : null,
+        weight: _weightController.text.isNotEmpty
+            ? double.parse(_weightController.text)
+            : null,
+        birthDate: _selectedBirthDate,
       );
 
       final id = await widget.authService.registerUser(user);
       setState(() => _isLoading = false);
 
       if (id > 0) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful! Please login')),
+        final newUser = await widget.authService.loginUser(
+          _emailController.text,
+          _passwordController.text,
         );
+
+        if (newUser != null) {
+          if (newUser.height == null || newUser.weight == null) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProfileCompletionScreen(user: newUser),
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MainApp(user: newUser),
+              ),
+            );
+          }
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registration failed')),
@@ -92,6 +125,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   }
                   return null;
                 },
+              ),
+              TextFormField(
+                controller: _heightController,
+                decoration: InputDecoration(labelText: 'Height (cm)'),
+                keyboardType: TextInputType.number,
+              ),
+              TextFormField(
+                controller: _weightController,
+                decoration: InputDecoration(labelText: 'Weight (kg)'),
+                keyboardType: TextInputType.number,
+              ),
+              TextFormField(
+                controller: _birthDateController,
+                decoration: InputDecoration(
+                  labelText: 'Birth Date',
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.calendar_today),
+                    onPressed: () => _selectBirthDate(context),
+                  ),
+                ),
+                readOnly: true,
               ),
               TextFormField(
                 controller: _passwordController,
@@ -132,12 +186,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  Future<void> _selectBirthDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedBirthDate = picked;
+        _birthDateController.text =
+        "${picked.day}/${picked.month}/${picked.year}";
+      });
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
+    _birthDateController.dispose();
     super.dispose();
   }
 }
