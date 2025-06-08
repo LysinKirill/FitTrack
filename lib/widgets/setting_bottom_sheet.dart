@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:fit_track/models/user.dart';
 import 'package:fit_track/services/database/db_helper.dart';
 import 'package:fit_track/services/database/user_repository.dart';
+import 'package:fit_track/services/auth_service.dart';
+import 'package:fit_track/screens/auth/login_screen.dart';
 
 class SettingsBottomSheet extends StatefulWidget {
   final User user;
+  final AuthService? authService;
 
-  const SettingsBottomSheet({super.key, required this.user});
+  const SettingsBottomSheet({super.key, required this.user, this.authService});
 
   @override
   _SettingsBottomSheetState createState() => _SettingsBottomSheetState();
@@ -121,6 +124,21 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
                     )
                     : const Text('Сохранить изменения'),
           ),
+
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 16),
+
+          // Logout button
+          ElevatedButton.icon(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout),
+            label: const Text('Выйти из аккаунта'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+          ),
         ],
       ),
     );
@@ -174,6 +192,35 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
         setState(() {
           _isSaving = false;
         });
+      }
+    }
+  }
+
+  // Method to handle user logout
+  Future<void> _logout() async {
+    try {
+      // If authService is provided, call its logout method
+      if (widget.authService != null) {
+        await widget.authService!.logout();
+      }
+
+      // Navigate to login screen and clear navigation stack
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder:
+                (context) => LoginScreen(
+                  authService: AuthService(DatabaseHelper.instance),
+                ),
+          ),
+          (route) => false, // Remove all previous routes
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка при выходе из аккаунта: $e')),
+        );
       }
     }
   }
