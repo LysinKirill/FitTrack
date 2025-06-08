@@ -26,7 +26,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   List<MealEntry> _mealEntries = [];
   late int _userId;
 
-
   int _totalCalories = 0;
   double _totalProteins = 0;
   double _totalFats = 0;
@@ -114,7 +113,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   Future<void> _addMealEntry() async {
     final result = await showDialog<MealEntry>(
       context: context,
-      builder: (context) => AddMealDialog(),
+      builder: (context) => AddMealDialog(selectedDate: _selectedDate),
     );
 
     if (result != null) {
@@ -160,6 +159,17 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
 
   // Debug method to add a test meal entry
   Future<void> _addTestMealEntry() async {
+    // Use the selected date with current time
+    final now = DateTime.now();
+    final dateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      now.hour,
+      now.minute,
+      now.second,
+    );
+
     final testMeal = MealEntry(
       name: 'Test Food',
       mealType: 'Завтрак',
@@ -167,7 +177,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       proteins: 20.0,
       fats: 10.0,
       carbs: 30.0,
-      dateTime: DateTime.now(),
+      dateTime: dateTime,
     );
 
     print('Adding test meal: ${testMeal.name}, type: ${testMeal.mealType}');
@@ -344,7 +354,11 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                       onTap: () async {
                         final result = await showDialog<MealEntry>(
                           context: context,
-                          builder: (context) => FoodSearchDialog(initialMealType: mealType),
+                          builder:
+                              (context) => FoodSearchDialog(
+                                initialMealType: mealType,
+                                selectedDate: _selectedDate,
+                              ),
                         );
 
                         if (result != null) {
@@ -437,8 +451,13 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
 
 class AddMealDialog extends StatefulWidget {
   final String? initialMealType;
+  final DateTime selectedDate;
 
-  const AddMealDialog({super.key, this.initialMealType});
+  const AddMealDialog({
+    super.key,
+    this.initialMealType,
+    required this.selectedDate,
+  });
 
   @override
   State<AddMealDialog> createState() => _AddMealDialogState();
@@ -573,6 +592,17 @@ class _AddMealDialogState extends State<AddMealDialog> {
         ElevatedButton(
           onPressed: () {
             if (_formKey.currentState!.validate()) {
+              // Use the selected date with current time
+              final now = DateTime.now();
+              final dateTime = DateTime(
+                widget.selectedDate.year,
+                widget.selectedDate.month,
+                widget.selectedDate.day,
+                now.hour,
+                now.minute,
+                now.second,
+              );
+
               final mealEntry = MealEntry(
                 name: _nameController.text,
                 mealType: _mealType,
@@ -580,7 +610,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
                 proteins: double.parse(_proteinsController.text),
                 fats: double.parse(_fatsController.text),
                 carbs: double.parse(_carbsController.text),
-                dateTime: DateTime.now(),
+                dateTime: dateTime,
               );
               Navigator.of(context).pop(mealEntry);
             }

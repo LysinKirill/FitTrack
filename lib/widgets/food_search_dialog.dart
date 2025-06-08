@@ -5,8 +5,13 @@ import '../services/api/fatsecret_api.dart';
 
 class FoodSearchDialog extends StatefulWidget {
   final String initialMealType;
+  final DateTime selectedDate;
 
-  const FoodSearchDialog({super.key, required this.initialMealType});
+  const FoodSearchDialog({
+    super.key,
+    required this.initialMealType,
+    required this.selectedDate,
+  });
 
   @override
   State<FoodSearchDialog> createState() => _FoodSearchDialogState();
@@ -35,7 +40,6 @@ class _FoodSearchDialogState extends State<FoodSearchDialog> {
     dotenv.env['FATSECRET_SECRET']!,
   );
 
-
   void _searchFoods() async {
     setState(() => _isSearching = true);
     try {
@@ -48,27 +52,27 @@ class _FoodSearchDialogState extends State<FoodSearchDialog> {
     }
   }
 
-
   List<FoodItem> parseSearchResults(Map<String, dynamic> data) {
     var foods = data['foods']['food'];
-    var results = foods.map<FoodItem>((food) {
-      var nutritionalInfo = parseNutritionalInfo(food['food_description']);
-      return FoodItem(
-        id: food['food_id'],
-        name: food['food_name'],
-        calories: (nutritionalInfo['Calories'] ?? 0).toInt(),
-        proteins: nutritionalInfo['Protein'] ?? 0,
-        fats: nutritionalInfo['Fat'] ?? 0,
-        carbs: nutritionalInfo['Carbs'] ?? 0,
-      );
-    }).toList();
+    var results =
+        foods.map<FoodItem>((food) {
+          var nutritionalInfo = parseNutritionalInfo(food['food_description']);
+          return FoodItem(
+            id: food['food_id'],
+            name: food['food_name'],
+            calories: (nutritionalInfo['Calories'] ?? 0).toInt(),
+            proteins: nutritionalInfo['Protein'] ?? 0,
+            fats: nutritionalInfo['Fat'] ?? 0,
+            carbs: nutritionalInfo['Carbs'] ?? 0,
+          );
+        }).toList();
 
     return results;
   }
 
   Map<String, double> parseNutritionalInfo(String input) {
     RegExp exp = RegExp(
-        r'Calories: (\d+\.?\d*)kcal \| Fat: (\d+\.?\d*)g \| Carbs: (\d+\.?\d*)g \| Protein: (\d+\.?\d*)g'
+      r'Calories: (\d+\.?\d*)kcal \| Fat: (\d+\.?\d*)g \| Carbs: (\d+\.?\d*)g \| Protein: (\d+\.?\d*)g',
     );
 
     Match? match = exp.firstMatch(input);
@@ -84,7 +88,6 @@ class _FoodSearchDialogState extends State<FoodSearchDialog> {
     return {};
   }
 
-
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -96,9 +99,10 @@ class _FoodSearchDialogState extends State<FoodSearchDialog> {
             DropdownButtonFormField<String>(
               value: _mealType,
               decoration: const InputDecoration(labelText: 'Meal Type'),
-              items: MealEntry.mealTypes.map((type) {
-                return DropdownMenuItem(value: type, child: Text(type));
-              }).toList(),
+              items:
+                  MealEntry.mealTypes.map((type) {
+                    return DropdownMenuItem(value: type, child: Text(type));
+                  }).toList(),
               onChanged: (value) => setState(() => _mealType = value!),
             ),
             TextField(
@@ -117,48 +121,63 @@ class _FoodSearchDialogState extends State<FoodSearchDialog> {
                 ? const Center(child: CircularProgressIndicator())
                 : _searchResults.isEmpty
                 ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.search_off, size: 48, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text(
-                    _searchController.text.isEmpty
-                        ? 'Search for foods'
-                        : 'No results found',
-                    style: TextStyle(color: Colors.grey),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.search_off, size: 48, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(
+                        _searchController.text.isEmpty
+                            ? 'Search for foods'
+                            : 'No results found',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            )
-                : ConstrainedBox(  // Add ConstrainedBox
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.4,
-              ),
-              child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final food in _searchResults)
-                  ListTile(
-                    title: Text(food.name),
-                    subtitle: Text(
-                      '${food.calories} cal | P:${food.proteins}g F:${food.fats}g C:${food.carbs}g',
-                    ),
-                    onTap: () {
-                      Navigator.pop(context, MealEntry(
-                        name: food.name,
-                        mealType: _mealType,
-                        calories: food.calories,
-                        proteins: food.proteins,
-                        fats: food.fats,
-                        carbs: food.carbs,
-                        dateTime: DateTime.now(),
-                      ));
-                    },
+                )
+                : ConstrainedBox(
+                  // Add ConstrainedBox
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.4,
                   ),
-              ],
-            )
-            ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final food in _searchResults)
+                        ListTile(
+                          title: Text(food.name),
+                          subtitle: Text(
+                            '${food.calories} cal | P:${food.proteins}g F:${food.fats}g C:${food.carbs}g',
+                          ),
+                          onTap: () {
+                            // Create a DateTime that combines the selected date with the current time
+                            final now = DateTime.now();
+                            final dateTime = DateTime(
+                              widget.selectedDate.year,
+                              widget.selectedDate.month,
+                              widget.selectedDate.day,
+                              now.hour,
+                              now.minute,
+                              now.second,
+                            );
+
+                            Navigator.pop(
+                              context,
+                              MealEntry(
+                                name: food.name,
+                                mealType: _mealType,
+                                calories: food.calories,
+                                proteins: food.proteins,
+                                fats: food.fats,
+                                carbs: food.carbs,
+                                dateTime: dateTime,
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                ),
           ],
         ),
       ),
