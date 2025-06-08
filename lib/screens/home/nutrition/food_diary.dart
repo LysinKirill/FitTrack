@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fit_track/models/meal_entry.dart';
 import 'package:fit_track/services/database/db_helper.dart';
-import 'package:fit_track/models/user.dart';
+import '../../../widgets/food_search_dialog.dart';
 
 class FoodDiaryScreen extends StatefulWidget {
   final int userId;
@@ -19,7 +19,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   List<MealEntry> _mealEntries = [];
   late int _userId;
 
-  // Nutrition summary
+
   int _totalCalories = 0;
   double _totalProteins = 0;
   double _totalFats = 0;
@@ -32,7 +32,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     _ensureUserExists().then((_) => _loadMealEntries());
   }
 
-  // Debug: Create a user if none exists
   Future<void> _ensureUserExists() async {
     final db = await _dbHelper.database;
     final users = await db.query('users');
@@ -303,9 +302,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                       onTap: () async {
                         final result = await showDialog<MealEntry>(
                           context: context,
-                          builder:
-                              (context) =>
-                                  AddMealDialog(initialMealType: mealType),
+                          builder: (context) => FoodSearchDialog(initialMealType: mealType),
                         );
 
                         if (result != null) {

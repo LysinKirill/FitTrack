@@ -30,6 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  uri: ^1.0.0
+  oauth1: ^2.1.0
+  flutter_dotenv: ^5.1.0
   sqflite: ^2.3.0
   path_provider: ^2.1.1
   hive: ^2.2.3
@@ -67,7 +70,8 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
+  assets:
+    - .env
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

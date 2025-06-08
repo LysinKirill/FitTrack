@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:fit_track/screens/auth/login_screen.dart';
 import 'package:fit_track/services/database/db_helper.dart';
 import 'package:fit_track/services/auth_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   final dbHelper = DatabaseHelper.instance;
   final authService = AuthService(dbHelper);
 
