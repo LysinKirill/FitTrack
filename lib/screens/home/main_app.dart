@@ -17,6 +17,7 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   int _currentIndex = 0;
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   late final List<Widget> _screens;
 
@@ -30,32 +31,76 @@ class _MainAppState extends State<MainApp> {
       ProgressChartsScreen(userId: widget.user.id!),
     ];
   }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.restaurant),
-            label: 'Nutrition',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_run),
-            label: 'Activity',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.show_chart),
-            label: 'Progress',
-          ),
-        ],
+    return WillPopScope(
+      onWillPop: () async {
+        // Handle back button press
+        return !await _navigatorKey.currentState!.maybePop();
+      },
+      child: Scaffold(
+        body: Navigator(
+          key: _navigatorKey,
+          onGenerateRoute: (settings) {
+            Widget page;
+
+            if (settings.name == '/food_diary') {
+              page = FoodDiaryScreen(userId: widget.user.id!);
+              // Switch to the nutrition tab
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() => _currentIndex = 1);
+              });
+            } else if (settings.name == '/activity_log') {
+              page = ActivityLogScreen(userId: widget.user.id!);
+              // Switch to the activity tab
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() => _currentIndex = 2);
+              });
+            } else {
+              // Default to the current screen
+              page = _screens[_currentIndex];
+            }
+
+            return MaterialPageRoute(
+              builder: (context) => page,
+              settings: settings,
+            );
+          },
+          initialRoute: '/',
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            // If we're already on this tab, pop to root
+            if (index == _currentIndex) {
+              _navigatorKey.currentState!.popUntil((route) => route.isFirst);
+            }
+            setState(() => _currentIndex = index);
+
+            // Navigate to the root of the selected tab
+            _navigatorKey.currentState!.pushNamedAndRemoveUntil(
+              '/',
+              (route) => false,
+            );
+          },
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Dashboard'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.restaurant),
+              label: 'Nutrition',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.directions_run),
+              label: 'Activity',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.show_chart),
+              label: 'Progress',
+            ),
+          ],
+        ),
       ),
     );
   }

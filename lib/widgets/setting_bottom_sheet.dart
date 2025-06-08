@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fit_track/models/user.dart';
+import 'package:fit_track/services/database/db_helper.dart';
+import 'package:fit_track/services/database/user_repository.dart';
 
 class SettingsBottomSheet extends StatefulWidget {
   final User user;
@@ -13,6 +15,11 @@ class SettingsBottomSheet extends StatefulWidget {
 class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
   late TextEditingController _calorieController;
   late TextEditingController _waterController;
+  late TextEditingController _weightController;
+  bool _isSaving = false;
+  final UserRepository _userRepository = UserRepository(
+    DatabaseHelper.instance,
+  );
 
   @override
   void initState() {
@@ -23,6 +30,9 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
     _waterController = TextEditingController(
       text: widget.user.dailyWaterGoal.toString(),
     );
+    _weightController = TextEditingController(
+      text: widget.user.weight?.toString() ?? '',
+    );
   }
 
   @override
@@ -31,42 +41,148 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Daily Goals', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Profile & Goals',
+            style: Theme.of(context).textTheme.titleLarge,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+
+          // User info section
+          Text(
+            'User Information',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).primaryColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          TextField(
+            controller: _weightController,
+            decoration: const InputDecoration(
+              labelText: 'Current Weight (kg)',
+              suffixIcon: Icon(Icons.monitor_weight),
+              hintText: 'Enter your current weight',
+            ),
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 16),
+
+          // Daily goals section
+          Text(
+            'Daily Goals',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).primaryColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+
           TextField(
             controller: _calorieController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Calorie Goal (kcal)',
               suffixIcon: Icon(Icons.local_fire_department),
             ),
             keyboardType: TextInputType.number,
           ),
+          const SizedBox(height: 8),
+
           TextField(
             controller: _waterController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Water Goal (ml)',
               suffixIcon: Icon(Icons.water_drop),
             ),
             keyboardType: TextInputType.number,
           ),
+          const SizedBox(height: 24),
+
           ElevatedButton(
-            onPressed: _saveGoals,
-            child: Text('Save Goals'),
+            onPressed: _isSaving ? null : _saveGoals,
+            child:
+                _isSaving
+                    ? const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 8),
+                        Text('Saving...'),
+                      ],
+                    )
+                    : const Text('Save Changes'),
           ),
         ],
       ),
     );
   }
 
-  void _saveGoals() {
-    // TODO: Implement save to database
-    Navigator.pop(context);
+  Future<void> _saveGoals() async {
+    // Validate inputs
+    final calorieGoal = int.tryParse(_calorieController.text);
+    final waterGoal = int.tryParse(_waterController.text);
+    final weight =
+        _weightController.text.isNotEmpty
+            ? double.tryParse(_weightController.text)
+            : null;
+
+    if (calorieGoal == null || waterGoal == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter valid numbers')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await _userRepository.updateUserGoals(
+        userId: widget.user.id!,
+        calorieGoal: calorieGoal,
+        waterGoal: waterGoal,
+        weight: weight,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Goals updated successfully')),
+        );
+        Navigator.pop(
+          context,
+          true,
+        ); // Return true to indicate successful update
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error updating goals: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
     _calorieController.dispose();
     _waterController.dispose();
+    _weightController.dispose();
     super.dispose();
   }
 }
