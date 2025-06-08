@@ -91,7 +91,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
   Future<void> _addTestActivityEntry() async {
     final testActivity = ActivityEntry(
       name: 'Test Activity',
-      activityType: 'Running',
+      activityType: 'Бег',
       duration: 30,
       caloriesBurned: 250,
       dateTime: DateTime.now(),
@@ -105,9 +105,9 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     print('Test activity added with ID: $id');
     await _loadActivityEntries();
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Test activity added')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Тестовая активность добавлена')),
+    );
   }
 
   String _formatDuration(int minutes) {
@@ -115,9 +115,9 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     final remainingMinutes = minutes % 60;
 
     if (hours > 0) {
-      return '${hours}h ${remainingMinutes}m';
+      return '${hours}ч ${remainingMinutes}м';
     } else {
-      return '${remainingMinutes}m';
+      return '${remainingMinutes}м';
     }
   }
 
@@ -149,7 +149,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
               print('Cleared $count activity entries');
               _loadActivityEntries();
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Cleared $count activity entries')),
+                SnackBar(content: Text('Удалено $count записей активности')),
               );
             },
           ),
@@ -179,7 +179,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                   },
                 ),
                 Text(
-                  DateFormat('EEEE, MMMM d').format(_selectedDate),
+                  DateFormat('EEEE, d MMMM').format(_selectedDate),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -287,7 +287,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                             children: [
                               Text(activityType),
                               Text(
-                                '${entries.fold<int>(0, (sum, entry) => sum + entry.caloriesBurned)} cal',
+                                '${entries.fold<int>(0, (sum, entry) => sum + entry.caloriesBurned)} ккал',
                                 style: TextStyle(
                                   color: Colors.grey[600],
                                   fontSize: 14,
@@ -387,7 +387,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '${entry.caloriesBurned} cal',
+            '${entry.caloriesBurned} ккал',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           IconButton(
@@ -416,7 +416,7 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
   final _caloriesController = TextEditingController();
   final _notesController = TextEditingController();
 
-  String _activityType = 'Running';
+  String _activityType = 'Бег';
 
   @override
   void initState() {

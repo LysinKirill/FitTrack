@@ -126,7 +126,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         if (snapshot.hasError) {
           return Scaffold(
-            body: Center(child: Text('Error: ${snapshot.error}')),
+            body: Center(child: Text('Ошибка: ${snapshot.error}')),
           );
         }
 
@@ -176,7 +176,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             },
                           ),
                           Text(
-                            DateFormat('EEEE, MMMM d').format(_selectedDate),
+                            DateFormat('EEEE, d MMMM').format(_selectedDate),
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -218,10 +218,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             const SizedBox(height: 8),
                             Text(
                               DateFormat(
-                                        'EEEE, MMMM d',
+                                        'EEEE, d MMMM',
                                       ).format(_selectedDate) ==
                                       DateFormat(
-                                        'EEEE, MMMM d',
+                                        'EEEE, d MMMM',
                                       ).format(DateTime.now())
                                   ? 'Вот ваш прогресс на сегодня'
                                   : 'Вот ваш прогресс на ${DateFormat('d MMMM').format(_selectedDate)}',
@@ -495,7 +495,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         bottom: 8.0,
                       ),
                       child: Text(
-                        'Сводка за день',
+                        'Сводка за сегодня',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

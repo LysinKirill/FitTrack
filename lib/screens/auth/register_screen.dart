@@ -464,7 +464,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() {
         _selectedBirthDate = picked;
         _birthDateController.text =
-            "${picked.day}/${picked.month}/${picked.year}";
+            "${picked.day}.${picked.month}.${picked.year}";
       });
     }
   }

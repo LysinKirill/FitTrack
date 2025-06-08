@@ -132,7 +132,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   Future<void> _addTestMealEntry() async {
     final testMeal = MealEntry(
       name: 'Test Food',
-      mealType: 'Breakfast',
+      mealType: 'Завтрак',
       calories: 300,
       proteins: 20.0,
       fats: 10.0,
@@ -148,7 +148,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Test meal added')));
+    ).showSnackBar(const SnackBar(content: Text('Тестовая еда добавлена')));
   }
 
   @override
@@ -207,7 +207,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                   },
                 ),
                 Text(
-                  DateFormat('EEEE, MMMM d').format(_selectedDate),
+                  DateFormat('EEEE, d MMMM').format(_selectedDate),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -251,17 +251,17 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                       ),
                       _buildNutrientColumn(
                         'Белки',
-                        '${_totalProteins.toStringAsFixed(1)}g',
+                        '${_totalProteins.toStringAsFixed(1)}г',
                         Colors.blue,
                       ),
                       _buildNutrientColumn(
                         'Жиры',
-                        '${_totalFats.toStringAsFixed(1)}g',
+                        '${_totalFats.toStringAsFixed(1)}г',
                         Colors.yellow.shade800,
                       ),
                       _buildNutrientColumn(
                         'Углеводы',
-                        '${_totalCarbs.toStringAsFixed(1)}g',
+                        '${_totalCarbs.toStringAsFixed(1)}г',
                         Colors.green,
                       ),
                     ],
@@ -286,7 +286,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                       Text(mealType),
                       if (entries.isNotEmpty)
                         Text(
-                          '${entries.fold<int>(0, (sum, entry) => sum + entry.calories)} cal',
+                          '${entries.fold<int>(0, (sum, entry) => sum + entry.calories)} ккал',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 14,
@@ -355,13 +355,13 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     return ListTile(
       title: Text(entry.name),
       subtitle: Text(
-        'P: ${entry.proteins.toStringAsFixed(1)}g | F: ${entry.fats.toStringAsFixed(1)}g | C: ${entry.carbs.toStringAsFixed(1)}g',
+        'Б: ${entry.proteins.toStringAsFixed(1)}г | Ж: ${entry.fats.toStringAsFixed(1)}г | У: ${entry.carbs.toStringAsFixed(1)}г',
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '${entry.calories} cal',
+            '${entry.calories} ккал',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           IconButton(
@@ -391,7 +391,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
   final _fatsController = TextEditingController();
   final _carbsController = TextEditingController();
 
-  String _mealType = 'Breakfast';
+  String _mealType = 'Завтрак';
 
   @override
   void initState() {

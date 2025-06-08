@@ -25,7 +25,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
   late Future<User> _userFuture;
 
   // Time range selection
-  String _selectedTimeRange = 'Week';
+  String _selectedTimeRange = 'Неделя';
   final List<String> _timeRanges = ['Неделя', 'Месяц', '3 Месяца', 'Год'];
 
   // Data for weight chart
@@ -47,16 +47,16 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
 
     // Determine start date based on selected time range
     switch (_selectedTimeRange) {
-      case 'Week':
+      case 'Неделя':
         startDate = now.subtract(const Duration(days: 7));
         break;
-      case 'Month':
+      case 'Месяц':
         startDate = DateTime(now.year, now.month - 1, now.day);
         break;
-      case '3 Months':
+      case '3 Месяца':
         startDate = DateTime(now.year, now.month - 3, now.day);
         break;
-      case 'Year':
+      case 'Год':
         startDate = DateTime(now.year - 1, now.month, now.day);
         break;
       default:
@@ -276,7 +276,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('Ошибка: ${snapshot.error}'));
           }
 
           final user = snapshot.data!;
@@ -447,11 +447,11 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                DateFormat('MMM d').format(sortedEntries.first.date),
+                DateFormat('d MMM').format(sortedEntries.first.date),
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               Text(
-                DateFormat('MMM d').format(sortedEntries.last.date),
+                DateFormat('d MMM').format(sortedEntries.last.date),
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],

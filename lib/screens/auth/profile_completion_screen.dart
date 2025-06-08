@@ -39,7 +39,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     _birthDateController = TextEditingController(
       text:
           widget.user.birthDate != null
-              ? '${widget.user.birthDate!.day}/${widget.user.birthDate!.month}/${widget.user.birthDate!.year}'
+              ? '${widget.user.birthDate!.day}.${widget.user.birthDate!.month}.${widget.user.birthDate!.year}'
               : '',
     );
     _selectedGender = widget.user.gender;
@@ -59,7 +59,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       setState(() {
         _selectedBirthDate = picked;
         _birthDateController.text =
-            "${picked.day}/${picked.month}/${picked.year}";
+            "${picked.day}.${picked.month}.${picked.year}";
       });
     }
   }
