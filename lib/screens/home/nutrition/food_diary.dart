@@ -6,8 +6,15 @@ import 'package:fit_track/models/user.dart';
 
 class FoodDiaryScreen extends StatefulWidget {
   final int userId;
+  final VoidCallback? onDataChanged;
+  final Function(int)? onCaloriesUpdated;
 
-  const FoodDiaryScreen({super.key, required this.userId});
+  const FoodDiaryScreen({
+    super.key,
+    required this.userId,
+    this.onDataChanged,
+    this.onCaloriesUpdated,
+  });
 
   @override
   State<FoodDiaryScreen> createState() => _FoodDiaryScreenState();
@@ -80,16 +87,39 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   }
 
   void _calculateNutritionSummary() {
-    _totalCalories = 0;
-    _totalProteins = 0;
-    _totalFats = 0;
-    _totalCarbs = 0;
+    int calories = 0;
+    double proteins = 0;
+    double fats = 0;
+    double carbs = 0;
 
     for (var entry in _mealEntries) {
-      _totalCalories += entry.calories;
-      _totalProteins += entry.proteins;
-      _totalFats += entry.fats;
-      _totalCarbs += entry.carbs;
+      calories += entry.calories;
+      proteins += entry.proteins;
+      fats += entry.fats;
+      carbs += entry.carbs;
+    }
+
+    setState(() {
+      _totalCalories = calories;
+      _totalProteins = proteins;
+      _totalFats = fats;
+      _totalCarbs = carbs;
+    });
+
+    // Notify parent about calories update
+    if (widget.onCaloriesUpdated != null) {
+      print('Directly updating calories: $calories');
+      widget.onCaloriesUpdated!(calories);
+    } else {
+      print('No onCaloriesUpdated callback provided');
+    }
+
+    // Notify parent that data has changed
+    if (widget.onDataChanged != null) {
+      print('Notifying parent that data has changed');
+      widget.onDataChanged!();
+    } else {
+      print('No onDataChanged callback provided');
     }
   }
 
@@ -120,12 +150,39 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       print('Meal added with ID: $id');
       await _loadMealEntries();
       print('Loaded ${_mealEntries.length} entries after adding');
+
+      // Notify parent about calories update
+      if (widget.onCaloriesUpdated != null) {
+        print('Directly updating calories: $_totalCalories');
+        widget.onCaloriesUpdated!(_totalCalories);
+      } else {
+        print('No onCaloriesUpdated callback provided');
+      }
+
+      // Notify parent that data has changed
+      if (widget.onDataChanged != null) {
+        print('Notifying parent that data has changed');
+        widget.onDataChanged!();
+      } else {
+        print('No onDataChanged callback provided');
+      }
     }
   }
 
   Future<void> _deleteMealEntry(int id) async {
     await _dbHelper.deleteMealEntry(id);
     _loadMealEntries();
+
+    // Notify parent about calories update
+    if (widget.onCaloriesUpdated != null) {
+      print('Directly updating calories: $_totalCalories');
+      widget.onCaloriesUpdated!(_totalCalories);
+    }
+
+    // Notify parent that data has changed
+    if (widget.onDataChanged != null) {
+      widget.onDataChanged!();
+    }
   }
 
   // Debug method to add a test meal entry
@@ -145,6 +202,17 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     print('Test meal added with ID: $id');
     await _loadMealEntries();
     print('Loaded ${_mealEntries.length} entries after adding test meal');
+
+    // Notify parent about calories update
+    if (widget.onCaloriesUpdated != null) {
+      print('Directly updating calories: $_totalCalories');
+      widget.onCaloriesUpdated!(_totalCalories);
+    }
+
+    // Notify parent that data has changed
+    if (widget.onDataChanged != null) {
+      widget.onDataChanged!();
+    }
 
     ScaffoldMessenger.of(
       context,
@@ -309,8 +377,30 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                         );
 
                         if (result != null) {
-                          await _dbHelper.insertMealEntry(result, _userId);
-                          _loadMealEntries();
+                          final id = await _dbHelper.insertMealEntry(
+                            result,
+                            _userId,
+                          );
+                          print('Added meal entry with ID: $id');
+                          await _loadMealEntries();
+
+                          // Notify parent about calories update
+                          if (widget.onCaloriesUpdated != null) {
+                            print(
+                              'Directly updating calories: $_totalCalories',
+                            );
+                            widget.onCaloriesUpdated!(_totalCalories);
+                          } else {
+                            print('No onCaloriesUpdated callback provided');
+                          }
+
+                          // Notify parent that data has changed
+                          if (widget.onDataChanged != null) {
+                            print('Notifying parent that data has changed');
+                            widget.onDataChanged!();
+                          } else {
+                            print('No onDataChanged callback provided');
+                          }
                         }
                       },
                     ),

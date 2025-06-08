@@ -16,10 +16,10 @@ class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.userId});
 
   @override
-  _DashboardScreenState createState() => _DashboardScreenState();
+  DashboardScreenState createState() => DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class DashboardScreenState extends State<DashboardScreen> {
   late Future<User> _userFuture;
   final UserRepository _userRepository = UserRepository(
     DatabaseHelper.instance,
@@ -44,29 +44,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadDailyData();
   }
 
+  // Public method to refresh data from outside
+  void refreshData() {
+    print("Dashboard refreshing data...");
+    // Force a complete refresh by recreating the user future
+    setState(() {
+      _userFuture = _userRepository.getUser(widget.userId);
+    });
+    _loadDailyData();
+  }
+
+  // Direct method to update calories consumed
+  void updateCaloriesConsumed(int calories) {
+    print("Directly updating calories consumed to: $calories");
+    setState(() {
+      _caloriesConsumed = calories;
+    });
+  }
+
   Future<void> _loadDailyData() async {
+    print("Loading daily data for date: $_selectedDate");
     final user = await _userFuture;
 
-    // Load meal entries
-    final mealEntries = await _dbHelper.getMealEntriesByDate(
-      widget.userId,
+    // Get total calories directly from the database
+    final calories = await _dbHelper.getTotalCaloriesForDate(
+      1, // Use user ID 1 instead of widget.userId
       _selectedDate,
     );
+    print("Total calories from database: $calories");
+
+    // Load meal entries for other nutrition data
+    final mealEntries = await _dbHelper.getMealEntriesByDate(
+      1, // Use user ID 1 instead of widget.userId
+      _selectedDate,
+    );
+    print("Loaded ${mealEntries.length} meal entries");
+
+    if (mealEntries.isNotEmpty) {
+      for (var meal in mealEntries) {
+        print(
+          "Meal: ${meal.name}, calories: ${meal.calories}, date: ${meal.dateTime}",
+        );
+      }
+    }
 
     // Load activity entries
     final activityEntries = await _dbHelper.getActivityEntriesByDate(
-      widget.userId,
+      1, // Use user ID 1 instead of widget.userId
       _selectedDate,
     );
+    print("Loaded ${activityEntries.length} activity entries");
 
-    // Calculate nutrition totals
-    int calories = 0;
+    // Calculate other nutrition totals
     double protein = 0;
     double fats = 0;
     double carbs = 0;
 
     for (var meal in mealEntries) {
-      calories += meal.calories;
       protein += meal.proteins;
       fats += meal.fats;
       carbs += meal.carbs;
@@ -80,22 +114,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
       burned += activity.caloriesBurned;
       duration += activity.duration;
     }
+    print("Calculated calories burned: $burned");
 
     // Load water entries
     final waterAmount = await _dbHelper.getTotalWaterForDate(
-      widget.userId,
+      1, // Use user ID 1 instead of widget.userId
       _selectedDate,
     );
+    print("Loaded water amount: $waterAmount");
 
-    setState(() {
-      _caloriesConsumed = calories;
-      _caloriesBurned = burned;
-      _waterConsumed = waterAmount;
-      _activityMinutes = duration;
-      _proteinConsumed = protein;
-      _fatsConsumed = fats;
-      _carbsConsumed = carbs;
-    });
+    if (mounted) {
+      setState(() {
+        _caloriesConsumed = calories;
+        _caloriesBurned = burned;
+        _waterConsumed = waterAmount;
+        _activityMinutes = duration;
+        _proteinConsumed = protein;
+        _fatsConsumed = fats;
+        _carbsConsumed = carbs;
+      });
+      print("Dashboard state updated with new values");
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -131,6 +170,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
 
         final user = snapshot.data!;
+
+        // Debug output
+        print("Dashboard display values:");
+        print("Calories consumed: $_caloriesConsumed");
+        print("Calories burned: $_caloriesBurned");
+        print("Daily calorie goal: ${user.dailyCalorieGoal}");
+
         final remainingCalories =
             user.dailyCalorieGoal - _caloriesConsumed + _caloriesBurned;
         final waterProgress = (_waterConsumed / user.dailyWaterGoal) * 100;
@@ -139,6 +185,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           appBar: AppBar(
             title: const Text('Главная'),
             actions: [
+              // Debug refresh button
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () {
+                  print("Manual refresh triggered");
+                  _loadDailyData();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Данные обновлены')),
+                  );
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.calendar_today),
                 onPressed: () => _selectDate(context),

@@ -244,8 +244,24 @@ class DatabaseHelper {
 
     if (allEntries.isNotEmpty) {
       print('Sample entry: ${allEntries.first}');
+
+      // Debug: Print all entries
+      for (var entry in allEntries) {
+        print(
+          'Entry: ${entry['name']}, calories: ${entry['calories']}, date: ${entry['date_time']}, user_id: ${entry['user_id']}',
+        );
+      }
     }
 
+    // Try a simpler query first to debug
+    final userEntries = await db.query(
+      'meal_entries',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+    print('Entries for user $userId: ${userEntries.length}');
+
+    // Now try the date-filtered query
     final result = await db.query(
       'meal_entries',
       where: 'user_id = ? AND date_time BETWEEN ? AND ?',
@@ -253,7 +269,14 @@ class DatabaseHelper {
       orderBy: 'date_time ASC',
     );
 
-    print('Query result count: ${result.length}');
+    print('Query result count for date range: ${result.length}');
+
+    // Debug: Print all filtered entries
+    for (var entry in result) {
+      print(
+        'Filtered entry: ${entry['name']}, calories: ${entry['calories']}, date: ${entry['date_time']}',
+      );
+    }
 
     return result.map((map) => MealEntry.fromMap(map)).toList();
   }
@@ -556,5 +579,17 @@ class DatabaseHelper {
     final db = await instance.database;
     print('Clearing all water entries');
     return await db.delete('water_entries');
+  }
+
+  // Get total calories for a date
+  Future<int> getTotalCaloriesForDate(int userId, DateTime date) async {
+    final entries = await getMealEntriesByDate(userId, date);
+    int total = 0;
+    for (var entry in entries) {
+      total += entry.calories;
+      print('Adding ${entry.calories} calories from ${entry.name}');
+    }
+    print('Total calories for date ${date.toString()}: $total');
+    return total;
   }
 }

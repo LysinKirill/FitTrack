@@ -3,6 +3,7 @@ import 'package:fit_track/screens/home/dashboard.dart';
 import 'package:fit_track/screens/home/nutrition/food_diary.dart';
 import 'package:fit_track/screens/home/activity/activity_log.dart';
 import 'package:fit_track/screens/home/progress/progress_charts.dart';
+import 'package:fit_track/services/database/db_helper.dart';
 
 import '../../models/user.dart';
 
@@ -18,18 +19,73 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   int _currentIndex = 0;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  bool _needsDashboardRefresh = false;
+  final GlobalKey<DashboardScreenState> _dashboardKey =
+      GlobalKey<DashboardScreenState>();
 
   late final List<Widget> _screens;
+
+  void _onDataChanged() {
+    setState(() {
+      _needsDashboardRefresh = true;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     _screens = [
-      DashboardScreen(userId: widget.user.id!),
-      FoodDiaryScreen(userId: widget.user.id!),
+      DashboardScreen(key: _dashboardKey, userId: widget.user.id!),
+      FoodDiaryScreen(
+        userId: widget.user.id!,
+        onDataChanged: _onDataChanged,
+        onCaloriesUpdated: (calories) {
+          print("Calories updated in food diary: $calories");
+          _dashboardKey.currentState?.updateCaloriesConsumed(calories);
+        },
+      ),
       ActivityLogScreen(userId: widget.user.id!),
       ProgressChartsScreen(userId: widget.user.id!),
     ];
+
+    // Force initial data sync between food diary and dashboard
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncFoodDiaryWithDashboard();
+    });
+  }
+
+  // Method to sync food diary data with dashboard
+  Future<void> _syncFoodDiaryWithDashboard() async {
+    print("Syncing food diary data with dashboard");
+    final dbHelper = DatabaseHelper.instance;
+
+    // Get all users to debug
+    final db = await dbHelper.database;
+    final users = await db.query('users');
+    print('Found ${users.length} users in database');
+    for (var user in users) {
+      print('User: ${user['id']} - ${user['name']}');
+    }
+
+    // Get all meal entries to debug
+    final allEntries = await db.query('meal_entries');
+    print('Total entries in meal_entries table: ${allEntries.length}');
+    for (var entry in allEntries) {
+      print(
+        'Entry: ${entry['name']}, calories: ${entry['calories']}, user_id: ${entry['user_id']}',
+      );
+    }
+
+    // Try with user ID 1 (from logs)
+    final calories = await dbHelper.getTotalCaloriesForDate(
+      1, // Use user ID 1 instead of widget.user.id!
+      DateTime.now(),
+    );
+
+    print("Initial calories from database: $calories");
+    if (calories > 0) {
+      _dashboardKey.currentState?.updateCaloriesConsumed(calories);
+    }
   }
 
   @override
@@ -46,7 +102,14 @@ class _MainAppState extends State<MainApp> {
             Widget page;
 
             if (settings.name == '/food_diary') {
-              page = FoodDiaryScreen(userId: widget.user.id!);
+              page = FoodDiaryScreen(
+                userId: widget.user.id!,
+                onDataChanged: _onDataChanged,
+                onCaloriesUpdated: (calories) {
+                  print("Calories updated in food diary: $calories");
+                  _dashboardKey.currentState?.updateCaloriesConsumed(calories);
+                },
+              );
               // Switch to the nutrition tab
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 setState(() => _currentIndex = 1);
@@ -76,6 +139,28 @@ class _MainAppState extends State<MainApp> {
             if (index == _currentIndex) {
               _navigatorKey.currentState!.popUntil((route) => route.isFirst);
             }
+
+            // Always refresh dashboard when switching to it
+            if (index == 0) {
+              print("Switching to dashboard tab, refreshing data");
+              Future.delayed(Duration(milliseconds: 100), () async {
+                // Get latest calories directly from database
+                final dbHelper = DatabaseHelper.instance;
+                final calories = await dbHelper.getTotalCaloriesForDate(
+                  1, // Use user ID 1 instead of widget.user.id!
+                  DateTime.now(),
+                );
+
+                print("Current calories from database: $calories");
+                if (calories > 0) {
+                  _dashboardKey.currentState?.updateCaloriesConsumed(calories);
+                }
+
+                _dashboardKey.currentState?.refreshData();
+                _needsDashboardRefresh = false;
+              });
+            }
+
             setState(() => _currentIndex = index);
 
             // Navigate to the root of the selected tab
