@@ -44,14 +44,14 @@ class ActivityEntry {
   }
 
   static List<String> activityTypes = [
-    'Running',
-    'Walking',
-    'Cycling',
-    'Swimming',
-    'Gym Workout',
-    'Yoga',
-    'Pilates',
-    'HIIT',
-    'Other',
+    'Бег',
+    'Ходьба',
+    'Велосипед',
+    'Плавание',
+    'Тренировка в зале',
+    'Йога',
+    'Пилатес',
+    'ВИИТ',
+    'Другое',
   ];
 }

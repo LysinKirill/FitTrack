@@ -134,7 +134,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Activity Log'),
+        title: const Text('Журнал активности'),
         actions: [
           // Debug button to add test activity
           IconButton(
@@ -209,7 +209,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Daily Summary',
+                    'Дневная сводка',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -219,19 +219,19 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                       _buildSummaryItem(
                         Icons.local_fire_department,
                         '$_totalCaloriesBurned',
-                        'Calories Burned',
+                        'Калории сожжено',
                         Colors.orange,
                       ),
                       _buildSummaryItem(
                         Icons.timer,
                         _formatDuration(_totalDuration),
-                        'Total Duration',
+                        'Общая длительность',
                         Colors.blue,
                       ),
                       _buildSummaryItem(
                         Icons.fitness_center,
                         '${_activityEntries.length}',
-                        'Activities',
+                        'Активности',
                         Colors.green,
                       ),
                     ],
@@ -256,7 +256,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No activities recorded for this day',
+                            'Нет записей активности за этот день',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
@@ -265,7 +265,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                           const SizedBox(height: 24),
                           ElevatedButton.icon(
                             icon: const Icon(Icons.add),
-                            label: const Text('Add Activity'),
+                            label: const Text('Добавить активность'),
                             onPressed: _addActivityEntry,
                           ),
                         ],
@@ -302,7 +302,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                             ),
                             ListTile(
                               leading: const Icon(Icons.add_circle_outline),
-                              title: const Text('Add Activity'),
+                              title: const Text('Добавить активность'),
                               onTap: () async {
                                 final result = await showDialog<ActivityEntry>(
                                   context: context,
@@ -369,7 +369,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Duration: ${_formatDuration(entry.duration)}'),
+          Text('Длительность: ${_formatDuration(entry.duration)}'),
           if (entry.notes != null && entry.notes!.isNotEmpty)
             Text(
               entry.notes!,
@@ -438,7 +438,7 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Add Activity'),
+      title: const Text('Добавить активность'),
       content: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -447,7 +447,7 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
             children: [
               DropdownButtonFormField<String>(
                 value: _activityType,
-                decoration: const InputDecoration(labelText: 'Activity Type'),
+                decoration: const InputDecoration(labelText: 'Тип активности'),
                 items:
                     ActivityEntry.activityTypes.map((type) {
                       return DropdownMenuItem(value: type, child: Text(type));
@@ -460,10 +460,12 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
               ),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Activity Name'),
+                decoration: const InputDecoration(
+                  labelText: 'Название активности',
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter an activity name';
+                    return 'Пожалуйста, введите название активности';
                   }
                   return null;
                 },
@@ -471,29 +473,29 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
               TextFormField(
                 controller: _durationController,
                 decoration: const InputDecoration(
-                  labelText: 'Duration (minutes)',
+                  labelText: 'Длительность (минуты)',
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter duration';
+                    return 'Пожалуйста, введите длительность';
                   }
                   if (int.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'Пожалуйста, введите корректное число';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _caloriesController,
-                decoration: const InputDecoration(labelText: 'Calories Burned'),
+                decoration: const InputDecoration(labelText: 'Сожжено калорий'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter calories burned';
+                    return 'Пожалуйста, введите количество сожженных калорий';
                   }
                   if (int.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'Пожалуйста, введите корректное число';
                   }
                   return null;
                 },
@@ -501,7 +503,7 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
               TextFormField(
                 controller: _notesController,
                 decoration: const InputDecoration(
-                  labelText: 'Notes (optional)',
+                  labelText: 'Заметки (необязательно)',
                 ),
                 maxLines: 2,
               ),
@@ -512,7 +514,7 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: const Text('Отмена'),
         ),
         ElevatedButton(
           onPressed: () {
@@ -531,7 +533,7 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
               Navigator.of(context).pop(activityEntry);
             }
           },
-          child: const Text('Add'),
+          child: const Text('Добавить'),
         ),
       ],
     );

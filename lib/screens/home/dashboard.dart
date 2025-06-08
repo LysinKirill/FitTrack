@@ -137,7 +137,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Dashboard'),
+            title: const Text('Главная'),
             actions: [
               IconButton(
                 icon: const Icon(Icons.calendar_today),
@@ -209,7 +209,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Hello, ${user.name}!',
+                              'Привет, ${user.name}!',
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -223,8 +223,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       DateFormat(
                                         'EEEE, MMMM d',
                                       ).format(DateTime.now())
-                                  ? 'Here\'s your progress for today'
-                                  : 'Here\'s your progress for ${DateFormat('MMMM d').format(_selectedDate)}',
+                                  ? 'Вот ваш прогресс на сегодня'
+                                  : 'Вот ваш прогресс на ${DateFormat('d MMMM').format(_selectedDate)}',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.grey[600],
@@ -237,14 +237,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 _buildCircularProgress(
                                   value:
                                       _caloriesConsumed / user.dailyCalorieGoal,
-                                  label: 'Calories',
+                                  label: 'Калории',
                                   color: Colors.orange,
                                   centerText:
                                       '${(_caloriesConsumed / user.dailyCalorieGoal * 100).toStringAsFixed(0)}%',
                                 ),
                                 _buildCircularProgress(
                                   value: _waterConsumed / user.dailyWaterGoal,
-                                  label: 'Water',
+                                  label: 'Вода',
                                   color: Colors.blue,
                                   centerText:
                                       '${(_waterConsumed / user.dailyWaterGoal * 100).toStringAsFixed(0)}%',
@@ -253,7 +253,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   value:
                                       _activityMinutes /
                                       60, // Assuming 60 minutes is the goal
-                                  label: 'Activity',
+                                  label: 'Активность',
                                   color: Colors.green,
                                   centerText: '${_activityMinutes}m',
                                 ),
@@ -279,7 +279,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Calories',
+                                  'Калории',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -302,7 +302,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
                                 Text(
-                                  ' kcal remaining',
+                                  ' ккал осталось',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.grey[600],
@@ -385,7 +385,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Consumed: $_caloriesConsumed',
+                                      'Потреблено: $_caloriesConsumed',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey[600],
@@ -405,7 +405,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Burned: $_caloriesBurned',
+                                      'Сожжено: $_caloriesBurned',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey[600],
@@ -434,7 +434,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Water',
+                                  'Вода',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -476,7 +476,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${waterProgress.toStringAsFixed(0)}% of daily goal',
+                              '${waterProgress.toStringAsFixed(0)}% от дневной цели',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[600],
@@ -495,7 +495,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         bottom: 8.0,
                       ),
                       child: Text(
-                        'Today\'s Summary',
+                        'Сводка за день',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -520,7 +520,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Icon(Icons.directions_run, color: Colors.green),
                                 const SizedBox(width: 8),
                                 const Text(
-                                  'Activity',
+                                  'Активность',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -535,13 +535,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 _buildSummaryItem(
                                   Icons.local_fire_department,
                                   '$_caloriesBurned',
-                                  'kcal burned',
+                                  'ккал сожжено',
                                   Colors.orange,
                                 ),
                                 _buildSummaryItem(
                                   Icons.timer,
                                   _formatDuration(_activityMinutes),
-                                  'active time',
+                                  'время активности',
                                   Colors.blue,
                                 ),
                               ],
@@ -567,7 +567,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Icon(Icons.restaurant, color: Colors.red),
                                 const SizedBox(width: 8),
                                 const Text(
-                                  'Nutrition',
+                                  'Питание',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -582,27 +582,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 _buildSummaryItem(
                                   Icons.food_bank,
                                   '$_caloriesConsumed',
-                                  'kcal consumed',
+                                  'ккал потреблено',
                                   Colors.red,
                                 ),
                                 _buildSummaryItem(
                                   null,
                                   '${_proteinConsumed.toStringAsFixed(1)}g',
-                                  'protein',
+                                  'белки',
                                   Colors.blue,
                                   textLabel: 'P',
                                 ),
                                 _buildSummaryItem(
                                   null,
                                   '${_fatsConsumed.toStringAsFixed(1)}g',
-                                  'fats',
+                                  'жиры',
                                   Colors.yellow.shade800,
                                   textLabel: 'F',
                                 ),
                                 _buildSummaryItem(
                                   null,
                                   '${_carbsConsumed.toStringAsFixed(1)}g',
-                                  'carbs',
+                                  'углеводы',
                                   Colors.green,
                                   textLabel: 'C',
                                 ),
@@ -621,7 +621,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         bottom: 8.0,
                       ),
                       child: Text(
-                        'Quick Actions',
+                        'Быстрые действия',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -643,14 +643,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             _buildActionButton(
                               context,
                               Icons.restaurant,
-                              'Add Meal',
+                              'Добавить еду',
                               Colors.red,
                               () => Navigator.pushNamed(context, '/food_diary'),
                             ),
                             _buildActionButton(
                               context,
                               Icons.directions_run,
-                              'Log Activity',
+                              'Записать активность',
                               Colors.green,
                               () =>
                                   Navigator.pushNamed(context, '/activity_log'),
@@ -658,7 +658,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             _buildActionButton(
                               context,
                               Icons.water_drop,
-                              'Add Water',
+                              'Добавить воду',
                               Colors.blue,
                               () => _showAddWaterDialog(context),
                             ),
@@ -830,12 +830,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Add Water'),
+          title: const Text('Добавить воду'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Select amount of water:'),
+                const Text('Выберите количество воды:'),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -898,13 +898,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: const Text('Отмена'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Add'),
+              child: const Text('Добавить'),
               onPressed: () async {
                 // Create and save water entry
                 final waterEntry = WaterEntry(
@@ -923,7 +923,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   // Show confirmation
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Added $amount ml of water'),
+                      content: Text('Добавлено $amount мл воды'),
                       backgroundColor: Colors.blue,
                     ),
                   );

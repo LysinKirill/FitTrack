@@ -26,7 +26,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
 
   // Time range selection
   String _selectedTimeRange = 'Week';
-  final List<String> _timeRanges = ['Week', 'Month', '3 Months', 'Year'];
+  final List<String> _timeRanges = ['Неделя', 'Месяц', '3 Месяца', 'Год'];
 
   // Data for weight chart
   List<WeightEntry> _weightEntries = [];
@@ -157,7 +157,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
         child: Padding(
           padding: EdgeInsets.all(16.0),
           child: Text(
-            'Height or weight not set',
+            'Рост или вес не указаны',
             style: TextStyle(color: Colors.grey),
           ),
         ),
@@ -173,16 +173,16 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
     Color color;
 
     if (bmi < 18.5) {
-      category = 'Underweight';
+      category = 'Недостаточный вес';
       color = Colors.blue;
     } else if (bmi < 25) {
-      category = 'Normal';
+      category = 'Нормальный';
       color = Colors.green;
     } else if (bmi < 30) {
-      category = 'Overweight';
+      category = 'Избыточный вес';
       color = Colors.orange;
     } else {
-      category = 'Obese';
+      category = 'Ожирение';
       color = Colors.red;
     }
 
@@ -249,7 +249,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Weight Tracking'),
+        title: const Text('Отслеживание веса'),
         actions: [
           // Time range selector
           PopupMenuButton<String>(
@@ -292,7 +292,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('Weight Tracking'),
+          _buildSectionTitle('Отслеживание веса'),
 
           // Current weight card
           Card(
@@ -303,7 +303,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Current Weight',
+                    'Текущий вес',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -317,7 +317,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                       ),
                       const SizedBox(width: 16),
                       Text(
-                        '${user.weight?.toStringAsFixed(1) ?? "Not set"} kg',
+                        '${user.weight?.toStringAsFixed(1) ?? "Не указан"} кг',
                         style: const TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -329,7 +329,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   Center(
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.add),
-                      label: const Text('Add Weight Entry'),
+                      label: const Text('Добавить запись веса'),
                       onPressed: () {
                         _showAddWeightDialog(context, user);
                       },
@@ -349,7 +349,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Weight History',
+                    'История веса',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -368,7 +368,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Body Mass Index (BMI)',
+                    'Индекс массы тела (ИМТ)',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -380,12 +380,12 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
 
           // Body measurements would be added here in a real app
           const SizedBox(height: 24),
-          _buildSectionTitle('Body Measurements'),
+          _buildSectionTitle('Измерения тела'),
           const Center(
             child: Padding(
               padding: EdgeInsets.all(32.0),
               child: Text(
-                'Body measurement tracking coming soon!',
+                'Отслеживание измерений тела скоро появится!',
                 style: TextStyle(color: Colors.grey),
               ),
             ),
@@ -397,7 +397,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
 
   Widget _buildWeightHistoryChart() {
     if (_weightEntries.isEmpty) {
-      return _buildEmptyDataCard('No weight entries available for this period');
+      return _buildEmptyDataCard('Нет записей веса за этот период');
     }
 
     // Sort entries by date
@@ -473,15 +473,15 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Add Weight Entry'),
+            title: const Text('Добавить запись веса'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: weightController,
                   decoration: const InputDecoration(
-                    labelText: 'Weight (kg)',
-                    hintText: 'Enter your weight in kg',
+                    labelText: 'Вес (кг)',
+                    hintText: 'Введите ваш вес в кг',
                   ),
                   keyboardType: TextInputType.number,
                 ),
@@ -489,8 +489,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                 TextField(
                   controller: noteController,
                   decoration: const InputDecoration(
-                    labelText: 'Note (optional)',
-                    hintText: 'Add a note about this entry',
+                    labelText: 'Заметка (необязательно)',
+                    hintText: 'Добавьте заметку к этой записи',
                   ),
                   maxLines: 2,
                 ),
@@ -499,7 +499,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: const Text('Отмена'),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -507,7 +507,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   final weightText = weightController.text.trim();
                   if (weightText.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter a weight')),
+                      const SnackBar(content: Text('Пожалуйста, введите вес')),
                     );
                     return;
                   }
@@ -516,7 +516,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   if (weight == null || weight <= 0) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Please enter a valid weight'),
+                        content: Text('Пожалуйста, введите корректный вес'),
                       ),
                     );
                     return;
@@ -561,18 +561,18 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Weight entry added successfully'),
+                        content: Text('Запись веса успешно добавлена'),
                       ),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Failed to add weight entry'),
+                        content: Text('Не удалось добавить запись веса'),
                       ),
                     );
                   }
                 },
-                child: const Text('Save'),
+                child: const Text('Сохранить'),
               ),
             ],
           ),
@@ -679,7 +679,7 @@ class WeightChartPainter extends CustomPainter {
           ..color = Colors.white.withOpacity(0.8)
           ..style = PaintingStyle.fill;
 
-    final textValue = '${weight.toStringAsFixed(1)} kg';
+    final textValue = '${weight.toStringAsFixed(1)} кг';
 
     final paragraphBuilder =
         ui.ParagraphBuilder(

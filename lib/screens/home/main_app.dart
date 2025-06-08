@@ -86,18 +86,18 @@ class _MainAppState extends State<MainApp> {
           },
           type: BottomNavigationBarType.fixed,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Dashboard'),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Главная'),
             BottomNavigationBarItem(
               icon: Icon(Icons.restaurant),
-              label: 'Nutrition',
+              label: 'Питание',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.directions_run),
-              label: 'Activity',
+              label: 'Активность',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.show_chart),
-              label: 'Progress',
+              label: 'Прогресс',
             ),
           ],
         ),
