@@ -71,7 +71,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
   Future<void> _addActivityEntry() async {
     final result = await showDialog<ActivityEntry>(
       context: context,
-      builder: (context) => AddActivityDialog(),
+      builder: (context) => AddActivityDialog(selectedDate: _selectedDate),
     );
 
     if (result != null) {
@@ -89,12 +89,23 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
 
   // Debug method to add a test activity entry
   Future<void> _addTestActivityEntry() async {
+    // Use the selected date with current time
+    final now = DateTime.now();
+    final dateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      now.hour,
+      now.minute,
+      now.second,
+    );
+
     final testActivity = ActivityEntry(
       name: 'Test Activity',
       activityType: 'Бег',
       duration: 30,
       caloriesBurned: 250,
-      dateTime: DateTime.now(),
+      dateTime: dateTime,
       notes: 'This is a test activity',
     );
 
@@ -309,6 +320,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                                   builder:
                                       (context) => AddActivityDialog(
                                         initialActivityType: activityType,
+                                        selectedDate: _selectedDate,
                                       ),
                                 );
 
@@ -402,8 +414,13 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
 
 class AddActivityDialog extends StatefulWidget {
   final String? initialActivityType;
+  final DateTime selectedDate;
 
-  const AddActivityDialog({super.key, this.initialActivityType});
+  const AddActivityDialog({
+    super.key,
+    this.initialActivityType,
+    required this.selectedDate,
+  });
 
   @override
   State<AddActivityDialog> createState() => _AddActivityDialogState();
@@ -519,12 +536,23 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
         ElevatedButton(
           onPressed: () {
             if (_formKey.currentState!.validate()) {
+              // Use the selected date with current time
+              final now = DateTime.now();
+              final dateTime = DateTime(
+                widget.selectedDate.year,
+                widget.selectedDate.month,
+                widget.selectedDate.day,
+                now.hour,
+                now.minute,
+                now.second,
+              );
+
               final activityEntry = ActivityEntry(
                 name: _nameController.text,
                 activityType: _activityType,
                 duration: int.parse(_durationController.text),
                 caloriesBurned: int.parse(_caloriesController.text),
-                dateTime: DateTime.now(),
+                dateTime: dateTime,
                 notes:
                     _notesController.text.isEmpty
                         ? null
