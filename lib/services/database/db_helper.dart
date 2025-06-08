@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:fit_track/models/meal_entry.dart';
 import 'package:fit_track/models/activity_entry.dart';
+import 'package:fit_track/models/weight_entry.dart';
 import 'package:intl/intl.dart';
 
 class DatabaseHelper {
@@ -24,7 +25,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3, // Increase version to trigger onCreate/onUpgrade
+      version: 4, // Increase version to trigger onCreate/onUpgrade
       onCreate: (db, version) {
         print('Creating new database tables');
         return _createDB(db, version);
@@ -62,6 +63,21 @@ class DatabaseHelper {
               calories_burned INTEGER NOT NULL,
               date_time TEXT NOT NULL,
               notes TEXT,
+              user_id INTEGER NOT NULL,
+              FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+          ''');
+        }
+
+        if (oldVersion < 4) {
+          // Add weight_entries table if upgrading from version 3
+          print('Adding weight_entries table');
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS weight_entries (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              weight REAL NOT NULL,
+              date TEXT NOT NULL,
+              note TEXT,
               user_id INTEGER NOT NULL,
               FOREIGN KEY (user_id) REFERENCES users (id)
             )
@@ -120,6 +136,17 @@ class DatabaseHelper {
         calories_burned INTEGER NOT NULL,
         date_time TEXT NOT NULL,
         notes TEXT,
+        user_id INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE weight_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        weight REAL NOT NULL,
+        date TEXT NOT NULL,
+        note TEXT,
         user_id INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users (id)
       )
@@ -302,5 +329,106 @@ class DatabaseHelper {
     final db = await instance.database;
     print('Clearing all activity entries');
     return await db.delete('activity_entries');
+  }
+
+  // Weight Entries CRUD operations
+  Future<int> insertWeightEntry(WeightEntry weightEntry) async {
+    final db = await instance.database;
+    final map = weightEntry.toMap();
+
+    print('Inserting weight entry: $map');
+
+    try {
+      final id = await db.insert('weight_entries', map);
+      print('Successfully inserted weight entry with ID: $id');
+      return id;
+    } catch (e) {
+      print('Error inserting weight entry: $e');
+      return -1;
+    }
+  }
+
+  Future<List<WeightEntry>> getWeightEntriesByUserId(int userId) async {
+    final db = await instance.database;
+
+    // First check if the table exists
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='weight_entries'",
+    );
+
+    if (tables.isEmpty) {
+      print('weight_entries table does not exist!');
+      return [];
+    }
+
+    final result = await db.query(
+      'weight_entries',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'date ASC',
+    );
+
+    print('Query result count: ${result.length}');
+
+    return result.map((map) => WeightEntry.fromMap(map)).toList();
+  }
+
+  Future<List<WeightEntry>> getWeightEntriesForDateRange(
+    int userId,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    final db = await instance.database;
+    final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+
+    final startDateStr = dateFormat.format(startDate);
+    final endDateStr = dateFormat.format(endDate);
+
+    print(
+      'Querying weight entries for userId: $userId, date range: $startDateStr to $endDateStr',
+    );
+
+    // First check if the table exists
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='weight_entries'",
+    );
+
+    if (tables.isEmpty) {
+      print('weight_entries table does not exist!');
+      return [];
+    }
+
+    final result = await db.query(
+      'weight_entries',
+      where: 'user_id = ? AND date BETWEEN ? AND ?',
+      whereArgs: [userId, startDateStr, endDateStr],
+      orderBy: 'date ASC',
+    );
+
+    print('Query result count: ${result.length}');
+
+    return result.map((map) => WeightEntry.fromMap(map)).toList();
+  }
+
+  Future<int> updateWeightEntry(WeightEntry weightEntry) async {
+    final db = await instance.database;
+    return await db.update(
+      'weight_entries',
+      weightEntry.toMap(),
+      where: 'id = ?',
+      whereArgs: [weightEntry.id],
+    );
+  }
+
+  Future<int> deleteWeightEntry(int id) async {
+    final db = await instance.database;
+    return await db.delete('weight_entries', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // For testing: clear all weight entries
+  Future<int> clearWeightEntries() async {
+    final db = await instance.database;
+    print('Clearing all weight entries');
+    return await db.delete('weight_entries');
   }
 }
