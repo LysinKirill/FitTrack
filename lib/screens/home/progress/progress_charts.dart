@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
 import 'package:fit_track/models/activity_entry.dart';
+import 'package:fit_track/models/body_measurement.dart';
 import 'package:fit_track/models/meal_entry.dart';
 import 'package:fit_track/models/user.dart';
 import 'package:fit_track/models/weight_entry.dart';
@@ -28,11 +29,23 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
   String _selectedTimeRange = 'Неделя';
   final List<String> _timeRanges = ['Неделя', 'Месяц', '3 Месяца', 'Год'];
 
-  // Data for weight chart
+  // Data for charts
   List<WeightEntry> _weightEntries = [];
+  List<BodyMeasurement> _bodyMeasurements = [];
 
-  // Hover state for weight points
+  // Hover state for chart points
   int? _hoveredPointIndex;
+
+  // Selected body measurement type for chart
+  String _selectedMeasurementType = 'Талия';
+  final List<String> _measurementTypes = [
+    'Грудь',
+    'Талия',
+    'Бёдра',
+    'Бедра',
+    'Руки',
+    'Плечи',
+  ];
 
   @override
   void initState() {
@@ -63,8 +76,9 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
         startDate = now.subtract(const Duration(days: 7));
     }
 
-    // Load weight entries for the selected time range
+    // Load data for the selected time range
     await _loadWeightEntries(startDate, now);
+    await _loadBodyMeasurements(startDate, now);
 
     setState(() {});
   }
@@ -80,6 +94,23 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
     } catch (e) {
       print('Error loading weight entries: $e');
       _weightEntries = [];
+    }
+  }
+
+  Future<void> _loadBodyMeasurements(
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    try {
+      _bodyMeasurements = await _dbHelper.getBodyMeasurementsForDateRange(
+        widget.userId,
+        startDate,
+        endDate,
+      );
+      print('Loaded ${_bodyMeasurements.length} body measurements');
+    } catch (e) {
+      print('Error loading body measurements: $e');
+      _bodyMeasurements = [];
     }
   }
 
@@ -249,7 +280,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Отслеживание веса'),
+        title: const Text('Прогресс'),
         actions: [
           // Time range selector
           PopupMenuButton<String>(
@@ -292,7 +323,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('Отслеживание веса'),
+          _buildSectionTitle('Отслеживание веса и измерений'),
 
           // Current weight card
           Card(
@@ -378,15 +409,82 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
             ),
           ),
 
-          // Body measurements would be added here in a real app
+          // Body measurements section
           const SizedBox(height: 24),
           _buildSectionTitle('Измерения тела'),
-          const Center(
+
+          // Current measurements card
+          Card(
+            margin: const EdgeInsets.symmetric(vertical: 16.0),
             child: Padding(
-              padding: EdgeInsets.all(32.0),
-              child: Text(
-                'Отслеживание измерений тела скоро появится!',
-                style: TextStyle(color: Colors.grey),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Текущие измерения',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCurrentMeasurements(),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: const Text('Добавить измерения'),
+                      onPressed: () {
+                        _showAddMeasurementsDialog(context, user);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Measurements history chart
+          Card(
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'История измерений',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      // Dropdown for selecting measurement type
+                      DropdownButton<String>(
+                        value: _selectedMeasurementType,
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _selectedMeasurementType = newValue;
+                            });
+                          }
+                        },
+                        items:
+                            _measurementTypes.map<DropdownMenuItem<String>>((
+                              String value,
+                            ) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildMeasurementsHistoryChart(),
+                ],
               ),
             ),
           ),
@@ -578,6 +676,388 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
           ),
     );
   }
+
+  // Helper method to build current measurements display
+  Widget _buildCurrentMeasurements() {
+    // Get the most recent measurement if available
+    final latestMeasurement =
+        _bodyMeasurements.isNotEmpty
+            ? _bodyMeasurements.reduce((a, b) => a.date.isAfter(b.date) ? a : b)
+            : null;
+
+    if (latestMeasurement == null) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text(
+            'Нет данных об измерениях',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 16.0,
+      runSpacing: 16.0,
+      alignment: WrapAlignment.center,
+      children: [
+        _buildMeasurementItem(
+          'Грудь',
+          latestMeasurement.chest,
+          'см',
+          Icons.accessibility_new,
+        ),
+        _buildMeasurementItem(
+          'Талия',
+          latestMeasurement.waist,
+          'см',
+          Icons.straighten,
+        ),
+        _buildMeasurementItem(
+          'Бёдра',
+          latestMeasurement.hips,
+          'см',
+          Icons.accessibility_new,
+        ),
+        _buildMeasurementItem(
+          'Бедра',
+          latestMeasurement.thighs,
+          'см',
+          Icons.accessibility_new,
+        ),
+        _buildMeasurementItem(
+          'Руки',
+          latestMeasurement.arms,
+          'см',
+          Icons.fitness_center,
+        ),
+        _buildMeasurementItem(
+          'Плечи',
+          latestMeasurement.shoulders,
+          'см',
+          Icons.accessibility_new,
+        ),
+      ],
+    );
+  }
+
+  // Helper method to build individual measurement item
+  Widget _buildMeasurementItem(
+    String label,
+    double? value,
+    String unit,
+    IconData icon,
+  ) {
+    return Container(
+      width: 100,
+      child: Column(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Theme.of(context).primaryColor),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value != null ? '${value.toStringAsFixed(1)} $unit' : '—',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+        ],
+      ),
+    );
+  }
+
+  // Helper method to build measurements history chart
+  Widget _buildMeasurementsHistoryChart() {
+    if (_bodyMeasurements.isEmpty) {
+      return _buildEmptyDataCard('Нет записей измерений за этот период');
+    }
+
+    // Filter measurements that have the selected measurement type
+    final filteredMeasurements =
+        _bodyMeasurements.where((m) {
+          switch (_selectedMeasurementType) {
+            case 'Грудь':
+              return m.chest != null;
+            case 'Талия':
+              return m.waist != null;
+            case 'Бёдра':
+              return m.hips != null;
+            case 'Бедра':
+              return m.thighs != null;
+            case 'Руки':
+              return m.arms != null;
+            case 'Плечи':
+              return m.shoulders != null;
+            default:
+              return false;
+          }
+        }).toList();
+
+    if (filteredMeasurements.isEmpty) {
+      return _buildEmptyDataCard(
+        'Нет записей для ${_selectedMeasurementType.toLowerCase()} за этот период',
+      );
+    }
+
+    // Sort measurements by date
+    filteredMeasurements.sort((a, b) => a.date.compareTo(b.date));
+
+    // Get measurement values based on selected type
+    List<double> values =
+        filteredMeasurements.map((m) {
+          switch (_selectedMeasurementType) {
+            case 'Грудь':
+              return m.chest ?? 0;
+            case 'Талия':
+              return m.waist ?? 0;
+            case 'Бёдра':
+              return m.hips ?? 0;
+            case 'Бедра':
+              return m.thighs ?? 0;
+            case 'Руки':
+              return m.arms ?? 0;
+            case 'Плечи':
+              return m.shoulders ?? 0;
+            default:
+              return 0.0;
+          }
+        }).toList();
+
+    // Find min and max values for chart scaling
+    double minValue;
+    double maxValue;
+
+    if (values.length == 1) {
+      // If there's only one entry, set min and max to create a range around it
+      minValue = values[0] * 0.95; // 5% below
+      maxValue = values[0] * 1.05; // 5% above
+    } else {
+      minValue = values.reduce((a, b) => a < b ? a : b);
+      maxValue = values.reduce((a, b) => a > b ? a : b);
+    }
+
+    // Add some padding to min and max for better visualization
+    final chartMinValue = (minValue - 1.0).clamp(0.0, double.infinity);
+    final chartMaxValue = maxValue + 1.0;
+
+    return SizedBox(
+      height: 250,
+      child: Column(
+        children: [
+          Expanded(
+            child: CustomPaint(
+              size: Size.infinite,
+              painter: MeasurementChartPainter(
+                measurements: filteredMeasurements,
+                measurementType: _selectedMeasurementType,
+                minValue: chartMinValue,
+                maxValue: chartMaxValue,
+                lineColor: Theme.of(context).primaryColor,
+                pointColor: Theme.of(context).colorScheme.secondary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                DateFormat('d MMM').format(filteredMeasurements.first.date),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+              Text(
+                DateFormat('d MMM').format(filteredMeasurements.last.date),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddMeasurementsDialog(BuildContext context, User user) {
+    final chestController = TextEditingController();
+    final waistController = TextEditingController();
+    final hipsController = TextEditingController();
+    final thighsController = TextEditingController();
+    final armsController = TextEditingController();
+    final shouldersController = TextEditingController();
+    final noteController = TextEditingController();
+
+    // Get the most recent measurement if available to pre-fill values
+    final latestMeasurement =
+        _bodyMeasurements.isNotEmpty
+            ? _bodyMeasurements.reduce((a, b) => a.date.isAfter(b.date) ? a : b)
+            : null;
+
+    if (latestMeasurement != null) {
+      chestController.text = latestMeasurement.chest?.toString() ?? '';
+      waistController.text = latestMeasurement.waist?.toString() ?? '';
+      hipsController.text = latestMeasurement.hips?.toString() ?? '';
+      thighsController.text = latestMeasurement.thighs?.toString() ?? '';
+      armsController.text = latestMeasurement.arms?.toString() ?? '';
+      shouldersController.text = latestMeasurement.shoulders?.toString() ?? '';
+    }
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Добавить измерения тела'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: chestController,
+                    decoration: const InputDecoration(
+                      labelText: 'Грудь (см)',
+                      hintText: 'Введите обхват груди в см',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: waistController,
+                    decoration: const InputDecoration(
+                      labelText: 'Талия (см)',
+                      hintText: 'Введите обхват талии в см',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: hipsController,
+                    decoration: const InputDecoration(
+                      labelText: 'Бёдра (см)',
+                      hintText: 'Введите обхват бёдер в см',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: thighsController,
+                    decoration: const InputDecoration(
+                      labelText: 'Бедра (см)',
+                      hintText: 'Введите обхват бедра в см',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: armsController,
+                    decoration: const InputDecoration(
+                      labelText: 'Руки (см)',
+                      hintText: 'Введите обхват руки в см',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: shouldersController,
+                    decoration: const InputDecoration(
+                      labelText: 'Плечи (см)',
+                      hintText: 'Введите ширину плеч в см',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: noteController,
+                    decoration: const InputDecoration(
+                      labelText: 'Заметка (необязательно)',
+                      hintText: 'Добавьте заметку к этой записи',
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Отмена'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  // Parse input values
+                  final chest = double.tryParse(chestController.text.trim());
+                  final waist = double.tryParse(waistController.text.trim());
+                  final hips = double.tryParse(hipsController.text.trim());
+                  final thighs = double.tryParse(thighsController.text.trim());
+                  final arms = double.tryParse(armsController.text.trim());
+                  final shoulders = double.tryParse(
+                    shouldersController.text.trim(),
+                  );
+
+                  // Validate that at least one measurement is provided
+                  if (chest == null &&
+                      waist == null &&
+                      hips == null &&
+                      thighs == null &&
+                      arms == null &&
+                      shoulders == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Пожалуйста, введите хотя бы одно измерение',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+
+                  // Create body measurement entry
+                  final measurement = BodyMeasurement(
+                    userId: widget.userId,
+                    date: DateTime.now(),
+                    chest: chest,
+                    waist: waist,
+                    hips: hips,
+                    thighs: thighs,
+                    arms: arms,
+                    shoulders: shoulders,
+                    note:
+                        noteController.text.trim().isEmpty
+                            ? null
+                            : noteController.text.trim(),
+                  );
+
+                  // Save to database
+                  final id = await _dbHelper.insertBodyMeasurement(measurement);
+                  if (id > 0) {
+                    // Reload data
+                    _loadData();
+
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Измерения успешно добавлены'),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Не удалось добавить измерения'),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Сохранить'),
+              ),
+            ],
+          ),
+    );
+  }
 }
 
 class WeightChartPainter extends CustomPainter {
@@ -731,3 +1211,161 @@ class WeightChartPainter extends CustomPainter {
 }
 
 // WeightValuePainter class removed as we're now always showing weight values directly
+
+class MeasurementChartPainter extends CustomPainter {
+  final List<BodyMeasurement> measurements;
+  final String measurementType;
+  final double minValue;
+  final double maxValue;
+  final Color lineColor;
+  final Color pointColor;
+
+  MeasurementChartPainter({
+    required this.measurements,
+    required this.measurementType,
+    required this.minValue,
+    required this.maxValue,
+    required this.lineColor,
+    required this.pointColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (measurements.isEmpty) return;
+
+    final paint =
+        Paint()
+          ..color = lineColor
+          ..strokeWidth = 2
+          ..style = PaintingStyle.stroke;
+
+    final pointPaint =
+        Paint()
+          ..color = pointColor
+          ..strokeWidth = 2
+          ..style = PaintingStyle.fill;
+
+    final path = Path();
+
+    // Handle single entry case
+    if (measurements.length == 1) {
+      final entry = measurements.first;
+      final x = size.width / 2; // Center the single point
+      final y = _calculateYPosition(_getMeasurementValue(entry), size.height);
+
+      // Draw the point
+      canvas.drawCircle(Offset(x, y), 5, pointPaint);
+
+      // Draw the measurement value
+      _drawMeasurementValue(canvas, _getMeasurementValue(entry), x, y);
+
+      return;
+    }
+
+    // Calculate x and y positions for multiple entries
+    final firstEntry = measurements.first;
+    final firstX = 0.0;
+    final firstY = _calculateYPosition(
+      _getMeasurementValue(firstEntry),
+      size.height,
+    );
+
+    path.moveTo(firstX, firstY);
+
+    // Draw points and connect with lines
+    for (int i = 0; i < measurements.length; i++) {
+      final entry = measurements[i];
+      final x = i * (size.width / (measurements.length - 1));
+      final y = _calculateYPosition(_getMeasurementValue(entry), size.height);
+
+      // Draw line to this point
+      if (i > 0) {
+        path.lineTo(x, y);
+      }
+
+      // Draw point
+      canvas.drawCircle(Offset(x, y), 5, pointPaint);
+
+      // Draw measurement value
+      _drawMeasurementValue(canvas, _getMeasurementValue(entry), x, y);
+    }
+
+    // Draw the path
+    canvas.drawPath(path, paint);
+  }
+
+  // Helper method to get measurement value based on type
+  double _getMeasurementValue(BodyMeasurement measurement) {
+    switch (measurementType) {
+      case 'Грудь':
+        return measurement.chest ?? 0;
+      case 'Талия':
+        return measurement.waist ?? 0;
+      case 'Бёдра':
+        return measurement.hips ?? 0;
+      case 'Бедра':
+        return measurement.thighs ?? 0;
+      case 'Руки':
+        return measurement.arms ?? 0;
+      case 'Плечи':
+        return measurement.shoulders ?? 0;
+      default:
+        return 0.0;
+    }
+  }
+
+  // Helper method to draw measurement value
+  void _drawMeasurementValue(Canvas canvas, double value, double x, double y) {
+    // Create a background for better readability
+    final bgPaint =
+        Paint()
+          ..color = Colors.white.withOpacity(0.8)
+          ..style = PaintingStyle.fill;
+
+    final textValue = '${value.toStringAsFixed(1)} см';
+
+    final paragraphBuilder =
+        ui.ParagraphBuilder(
+            ui.ParagraphStyle(
+              textAlign: ui.TextAlign.center,
+              fontSize: 14,
+              fontWeight: ui.FontWeight.bold,
+            ),
+          )
+          ..pushStyle(ui.TextStyle(color: Colors.black))
+          ..addText(textValue);
+
+    final paragraph =
+        paragraphBuilder.build()..layout(ui.ParagraphConstraints(width: 70));
+
+    // Position the text above the point
+    final textX = x - paragraph.width / 2;
+    final textY = y - paragraph.height - 10;
+
+    // Draw background with padding
+    final padding = 4.0;
+    final bgRect = Rect.fromLTWH(
+      textX - padding,
+      textY - padding,
+      paragraph.width + padding * 2,
+      paragraph.height + padding * 2,
+    );
+
+    final bgRRect = RRect.fromRectAndRadius(bgRect, const Radius.circular(4));
+
+    canvas.drawRRect(bgRRect, bgPaint);
+
+    // Draw text
+    canvas.drawParagraph(paragraph, Offset(textX, textY));
+  }
+
+  double _calculateYPosition(double value, double height) {
+    // Invert y-axis (0 is at top in canvas)
+    return height - ((value - minValue) / (maxValue - minValue) * height);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+}

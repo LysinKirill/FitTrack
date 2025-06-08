@@ -4,6 +4,7 @@ import 'package:fit_track/models/meal_entry.dart';
 import 'package:fit_track/models/activity_entry.dart';
 import 'package:fit_track/models/weight_entry.dart';
 import 'package:fit_track/models/water_entry.dart';
+import 'package:fit_track/models/body_measurement.dart';
 import 'package:intl/intl.dart';
 
 class DatabaseHelper {
@@ -26,7 +27,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 6, // Increase version to trigger onCreate/onUpgrade
+      version: 7, // Increase version to trigger onCreate/onUpgrade
       onCreate: (db, version) {
         print('Creating new database tables');
         return _createDB(db, version);
@@ -111,6 +112,26 @@ class DatabaseHelper {
             'ALTER TABLE users ADD COLUMN activity_level TEXT DEFAULT "moderate"',
           );
         }
+
+        if (oldVersion < 7) {
+          // Add body_measurements table
+          print('Adding body_measurements table');
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS body_measurements (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id INTEGER NOT NULL,
+              date TEXT NOT NULL,
+              chest REAL,
+              waist REAL,
+              hips REAL,
+              thighs REAL,
+              arms REAL,
+              shoulders REAL,
+              note TEXT,
+              FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+          ''');
+        }
       },
       onOpen: (db) async {
         print('Database opened');
@@ -188,6 +209,22 @@ class DatabaseHelper {
         amount INTEGER NOT NULL,
         date_time TEXT NOT NULL,
         user_id INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE body_measurements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        chest REAL,
+        waist REAL,
+        hips REAL,
+        thighs REAL,
+        arms REAL,
+        shoulders REAL,
+        note TEXT,
         FOREIGN KEY (user_id) REFERENCES users (id)
       )
     ''');
@@ -591,5 +628,110 @@ class DatabaseHelper {
     }
     print('Total calories for date ${date.toString()}: $total');
     return total;
+  }
+
+  // Body Measurements CRUD operations
+  Future<int> insertBodyMeasurement(BodyMeasurement measurement) async {
+    final db = await instance.database;
+    final map = measurement.toMap();
+
+    print('Inserting body measurement: $map');
+
+    try {
+      final id = await db.insert('body_measurements', map);
+      print('Successfully inserted body measurement with ID: $id');
+      return id;
+    } catch (e) {
+      print('Error inserting body measurement: $e');
+      return -1;
+    }
+  }
+
+  Future<List<BodyMeasurement>> getBodyMeasurementsByUserId(int userId) async {
+    final db = await instance.database;
+
+    // First check if the table exists
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='body_measurements'",
+    );
+
+    if (tables.isEmpty) {
+      print('body_measurements table does not exist!');
+      return [];
+    }
+
+    final result = await db.query(
+      'body_measurements',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'date ASC',
+    );
+
+    print('Query result count: ${result.length}');
+
+    return result.map((map) => BodyMeasurement.fromMap(map)).toList();
+  }
+
+  Future<List<BodyMeasurement>> getBodyMeasurementsForDateRange(
+    int userId,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    final db = await instance.database;
+    final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+
+    final startDateStr = dateFormat.format(startDate);
+    final endDateStr = dateFormat.format(endDate);
+
+    print(
+      'Querying body measurements for userId: $userId, date range: $startDateStr to $endDateStr',
+    );
+
+    // First check if the table exists
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='body_measurements'",
+    );
+
+    if (tables.isEmpty) {
+      print('body_measurements table does not exist!');
+      return [];
+    }
+
+    final result = await db.query(
+      'body_measurements',
+      where: 'user_id = ? AND date BETWEEN ? AND ?',
+      whereArgs: [userId, startDateStr, endDateStr],
+      orderBy: 'date ASC',
+    );
+
+    print('Query result count: ${result.length}');
+
+    return result.map((map) => BodyMeasurement.fromMap(map)).toList();
+  }
+
+  Future<int> updateBodyMeasurement(BodyMeasurement measurement) async {
+    final db = await instance.database;
+    return await db.update(
+      'body_measurements',
+      measurement.toMap(),
+      where: 'id = ?',
+      whereArgs: [measurement.id],
+    );
+  }
+
+  Future<int> deleteBodyMeasurement(int id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'body_measurements',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // For testing: clear all body measurements
+  Future<int> clearBodyMeasurements() async {
+    final db = await instance.database;
+    print('Clearing all body measurements');
+    return await db.delete('body_measurements');
   }
 }
