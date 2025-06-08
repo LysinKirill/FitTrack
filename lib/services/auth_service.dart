@@ -7,6 +7,13 @@ class AuthService {
 
   AuthService(this.dbHelper);
 
+  // Method to handle user logout
+  Future<void> logout() async {
+    // In a more complex app, you might clear tokens, cached data, etc.
+    // For this app, we just need to return to login screen
+    return Future.value();
+  }
+
   Future<int> registerUser(User user) async {
     final db = await dbHelper.database;
     final hashedUser = User(
@@ -15,10 +22,17 @@ class AuthService {
       email: user.email,
       password: PasswordHelper.hashPassword(user.password),
       createdAt: user.createdAt,
+      height: user.height,
+      weight: user.weight,
+      birthDate: user.birthDate,
+      gender: user.gender,
+      fitnessGoal: user.fitnessGoal,
+      activityLevel: user.activityLevel,
+      dailyCalorieGoal: user.dailyCalorieGoal,
+      dailyWaterGoal: user.dailyWaterGoal,
     );
     return await db.insert('users', hashedUser.toMap());
   }
-
 
   Future<User?> loginUser(String email, String password) async {
     final db = await dbHelper.database;
@@ -36,6 +50,7 @@ class AuthService {
     }
     return null;
   }
+
   Future<bool> emailExists(String email) async {
     final db = await dbHelper.database;
     final maps = await db.query(

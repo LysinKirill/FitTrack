@@ -6,8 +6,15 @@ import '../../../widgets/food_search_dialog.dart';
 
 class FoodDiaryScreen extends StatefulWidget {
   final int userId;
+  final VoidCallback? onDataChanged;
+  final Function(int)? onCaloriesUpdated;
 
-  const FoodDiaryScreen({super.key, required this.userId});
+  const FoodDiaryScreen({
+    super.key,
+    required this.userId,
+    this.onDataChanged,
+    this.onCaloriesUpdated,
+  });
 
   @override
   State<FoodDiaryScreen> createState() => _FoodDiaryScreenState();
@@ -28,34 +35,8 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   @override
   void initState() {
     super.initState();
-    _userId = widget.userId;
-    _ensureUserExists().then((_) => _loadMealEntries());
-  }
-
-  Future<void> _ensureUserExists() async {
-    final db = await _dbHelper.database;
-    final users = await db.query('users');
-    print('Found ${users.length} users in database');
-
-    if (users.isEmpty) {
-      print('No users found, creating a test user');
-      final now = DateTime.now().toIso8601String();
-      final userId = await db.insert('users', {
-        'name': 'Test User',
-        'email': 'test@example.com',
-        'password': 'password123',
-        'created_at': now,
-      });
-      print('Created test user with ID: $userId');
-      setState(() {
-        _userId = userId;
-      });
-    } else {
-      print('Using existing user with ID: ${users.first['id']}');
-      setState(() {
-        _userId = users.first['id'] as int;
-      });
-    }
+    _userId = widget.userId; // Always use the user ID passed from the parent
+    _loadMealEntries(); // Load meal entries directly without _ensureUserExists
   }
 
   Future<void> _loadMealEntries() async {
@@ -79,16 +60,39 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   }
 
   void _calculateNutritionSummary() {
-    _totalCalories = 0;
-    _totalProteins = 0;
-    _totalFats = 0;
-    _totalCarbs = 0;
+    int calories = 0;
+    double proteins = 0;
+    double fats = 0;
+    double carbs = 0;
 
     for (var entry in _mealEntries) {
-      _totalCalories += entry.calories;
-      _totalProteins += entry.proteins;
-      _totalFats += entry.fats;
-      _totalCarbs += entry.carbs;
+      calories += entry.calories;
+      proteins += entry.proteins;
+      fats += entry.fats;
+      carbs += entry.carbs;
+    }
+
+    setState(() {
+      _totalCalories = calories;
+      _totalProteins = proteins;
+      _totalFats = fats;
+      _totalCarbs = carbs;
+    });
+
+    // Notify parent about calories update
+    if (widget.onCaloriesUpdated != null) {
+      print('Directly updating calories: $calories');
+      widget.onCaloriesUpdated!(calories);
+    } else {
+      print('No onCaloriesUpdated callback provided');
+    }
+
+    // Notify parent that data has changed
+    if (widget.onDataChanged != null) {
+      print('Notifying parent that data has changed');
+      widget.onDataChanged!();
+    } else {
+      print('No onDataChanged callback provided');
     }
   }
 
@@ -119,19 +123,46 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       print('Meal added with ID: $id');
       await _loadMealEntries();
       print('Loaded ${_mealEntries.length} entries after adding');
+
+      // Notify parent about calories update
+      if (widget.onCaloriesUpdated != null) {
+        print('Directly updating calories: $_totalCalories');
+        widget.onCaloriesUpdated!(_totalCalories);
+      } else {
+        print('No onCaloriesUpdated callback provided');
+      }
+
+      // Notify parent that data has changed
+      if (widget.onDataChanged != null) {
+        print('Notifying parent that data has changed');
+        widget.onDataChanged!();
+      } else {
+        print('No onDataChanged callback provided');
+      }
     }
   }
 
   Future<void> _deleteMealEntry(int id) async {
     await _dbHelper.deleteMealEntry(id);
     _loadMealEntries();
+
+    // Notify parent about calories update
+    if (widget.onCaloriesUpdated != null) {
+      print('Directly updating calories: $_totalCalories');
+      widget.onCaloriesUpdated!(_totalCalories);
+    }
+
+    // Notify parent that data has changed
+    if (widget.onDataChanged != null) {
+      widget.onDataChanged!();
+    }
   }
 
   // Debug method to add a test meal entry
   Future<void> _addTestMealEntry() async {
     final testMeal = MealEntry(
       name: 'Test Food',
-      mealType: 'Breakfast',
+      mealType: 'Завтрак',
       calories: 300,
       proteins: 20.0,
       fats: 10.0,
@@ -145,9 +176,20 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     await _loadMealEntries();
     print('Loaded ${_mealEntries.length} entries after adding test meal');
 
+    // Notify parent about calories update
+    if (widget.onCaloriesUpdated != null) {
+      print('Directly updating calories: $_totalCalories');
+      widget.onCaloriesUpdated!(_totalCalories);
+    }
+
+    // Notify parent that data has changed
+    if (widget.onDataChanged != null) {
+      widget.onDataChanged!();
+    }
+
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Test meal added')));
+    ).showSnackBar(const SnackBar(content: Text('Тестовая еда добавлена')));
   }
 
   @override
@@ -161,7 +203,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Food Diary'),
+        title: const Text('Дневник питания'),
         actions: [
           // Debug button to add test meal
           IconButton(
@@ -176,7 +218,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
               print('Cleared $count meal entries');
               _loadMealEntries();
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Cleared $count meal entries')),
+                SnackBar(content: Text('Удалено $count записей о приеме пищи')),
               );
             },
           ),
@@ -206,7 +248,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                   },
                 ),
                 Text(
-                  DateFormat('EEEE, MMMM d').format(_selectedDate),
+                  DateFormat('EEEE, d MMMM').format(_selectedDate),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -236,7 +278,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Daily Summary',
+                    'Дневная сводка',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
@@ -244,23 +286,23 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildNutrientColumn(
-                        'Calories',
+                        'Калории',
                         _totalCalories.toString(),
                         Colors.red,
                       ),
                       _buildNutrientColumn(
-                        'Protein',
-                        '${_totalProteins.toStringAsFixed(1)}g',
+                        'Белки',
+                        '${_totalProteins.toStringAsFixed(1)}г',
                         Colors.blue,
                       ),
                       _buildNutrientColumn(
-                        'Fats',
-                        '${_totalFats.toStringAsFixed(1)}g',
+                        'Жиры',
+                        '${_totalFats.toStringAsFixed(1)}г',
                         Colors.yellow.shade800,
                       ),
                       _buildNutrientColumn(
-                        'Carbs',
-                        '${_totalCarbs.toStringAsFixed(1)}g',
+                        'Углеводы',
+                        '${_totalCarbs.toStringAsFixed(1)}г',
                         Colors.green,
                       ),
                     ],
@@ -285,7 +327,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                       Text(mealType),
                       if (entries.isNotEmpty)
                         Text(
-                          '${entries.fold<int>(0, (sum, entry) => sum + entry.calories)} cal',
+                          '${entries.fold<int>(0, (sum, entry) => sum + entry.calories)} ккал',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 14,
@@ -298,7 +340,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                     ...entries.map((entry) => _buildMealEntryTile(entry)),
                     ListTile(
                       leading: const Icon(Icons.add_circle_outline),
-                      title: const Text('Add Food'),
+                      title: const Text('Добавить еду'),
                       onTap: () async {
                         final result = await showDialog<MealEntry>(
                           context: context,
@@ -306,8 +348,30 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                         );
 
                         if (result != null) {
-                          await _dbHelper.insertMealEntry(result, _userId);
-                          _loadMealEntries();
+                          final id = await _dbHelper.insertMealEntry(
+                            result,
+                            _userId,
+                          );
+                          print('Added meal entry with ID: $id');
+                          await _loadMealEntries();
+
+                          // Notify parent about calories update
+                          if (widget.onCaloriesUpdated != null) {
+                            print(
+                              'Directly updating calories: $_totalCalories',
+                            );
+                            widget.onCaloriesUpdated!(_totalCalories);
+                          } else {
+                            print('No onCaloriesUpdated callback provided');
+                          }
+
+                          // Notify parent that data has changed
+                          if (widget.onDataChanged != null) {
+                            print('Notifying parent that data has changed');
+                            widget.onDataChanged!();
+                          } else {
+                            print('No onDataChanged callback provided');
+                          }
                         }
                       },
                     ),
@@ -352,13 +416,13 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     return ListTile(
       title: Text(entry.name),
       subtitle: Text(
-        'P: ${entry.proteins.toStringAsFixed(1)}g | F: ${entry.fats.toStringAsFixed(1)}g | C: ${entry.carbs.toStringAsFixed(1)}g',
+        'Б: ${entry.proteins.toStringAsFixed(1)}г | Ж: ${entry.fats.toStringAsFixed(1)}г | У: ${entry.carbs.toStringAsFixed(1)}г',
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '${entry.calories} cal',
+            '${entry.calories} ккал',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           IconButton(
@@ -388,7 +452,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
   final _fatsController = TextEditingController();
   final _carbsController = TextEditingController();
 
-  String _mealType = 'Breakfast';
+  String _mealType = 'Завтрак';
 
   @override
   void initState() {
@@ -411,7 +475,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Add Food'),
+      title: const Text('Добавить еду'),
       content: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -420,7 +484,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
             children: [
               DropdownButtonFormField<String>(
                 value: _mealType,
-                decoration: const InputDecoration(labelText: 'Meal Type'),
+                decoration: const InputDecoration(labelText: 'Тип приема пищи'),
                 items:
                     MealEntry.mealTypes.map((type) {
                       return DropdownMenuItem(value: type, child: Text(type));
@@ -433,66 +497,66 @@ class _AddMealDialogState extends State<AddMealDialog> {
               ),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Food Name'),
+                decoration: const InputDecoration(labelText: 'Название еды'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a food name';
+                    return 'Пожалуйста, введите название еды';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _caloriesController,
-                decoration: const InputDecoration(labelText: 'Calories'),
+                decoration: const InputDecoration(labelText: 'Калории'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter calories';
+                    return 'Пожалуйста, введите калории';
                   }
                   if (int.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'Пожалуйста, введите корректное число';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _proteinsController,
-                decoration: const InputDecoration(labelText: 'Proteins (g)'),
+                decoration: const InputDecoration(labelText: 'Белки (г)'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter proteins';
+                    return 'Пожалуйста, введите белки';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'Пожалуйста, введите корректное число';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _fatsController,
-                decoration: const InputDecoration(labelText: 'Fats (g)'),
+                decoration: const InputDecoration(labelText: 'Жиры (г)'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter fats';
+                    return 'Пожалуйста, введите жиры';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'Пожалуйста, введите корректное число';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _carbsController,
-                decoration: const InputDecoration(labelText: 'Carbs (g)'),
+                decoration: const InputDecoration(labelText: 'Углеводы (г)'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter carbs';
+                    return 'Пожалуйста, введите углеводы';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'Пожалуйста, введите корректное число';
                   }
                   return null;
                 },
@@ -504,7 +568,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: const Text('Отмена'),
         ),
         ElevatedButton(
           onPressed: () {
@@ -521,7 +585,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
               Navigator.of(context).pop(mealEntry);
             }
           },
-          child: const Text('Add'),
+          child: const Text('Добавить'),
         ),
       ],
     );

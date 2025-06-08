@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:fit_track/models/user.dart';
 import 'package:fit_track/services/database/db_helper.dart';
 import 'package:fit_track/services/database/user_repository.dart';
+import 'package:fit_track/services/auth_service.dart';
+import 'package:fit_track/screens/auth/login_screen.dart';
 
 class SettingsBottomSheet extends StatefulWidget {
   final User user;
+  final AuthService? authService;
 
-  const SettingsBottomSheet({super.key, required this.user});
+  const SettingsBottomSheet({super.key, required this.user, this.authService});
 
   @override
   _SettingsBottomSheetState createState() => _SettingsBottomSheetState();
@@ -44,7 +47,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Profile & Goals',
+            'Профиль и цели',
             style: Theme.of(context).textTheme.titleLarge,
             textAlign: TextAlign.center,
           ),
@@ -52,7 +55,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
 
           // User info section
           Text(
-            'User Information',
+            'Информация о пользователе',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -64,9 +67,9 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
           TextField(
             controller: _weightController,
             decoration: const InputDecoration(
-              labelText: 'Current Weight (kg)',
+              labelText: 'Текущий вес (кг)',
               suffixIcon: Icon(Icons.monitor_weight),
-              hintText: 'Enter your current weight',
+              hintText: 'Введите ваш текущий вес',
             ),
             keyboardType: TextInputType.number,
           ),
@@ -74,7 +77,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
 
           // Daily goals section
           Text(
-            'Daily Goals',
+            'Дневные цели',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -86,7 +89,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
           TextField(
             controller: _calorieController,
             decoration: const InputDecoration(
-              labelText: 'Calorie Goal (kcal)',
+              labelText: 'Цель по калориям (ккал)',
               suffixIcon: Icon(Icons.local_fire_department),
             ),
             keyboardType: TextInputType.number,
@@ -96,7 +99,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
           TextField(
             controller: _waterController,
             decoration: const InputDecoration(
-              labelText: 'Water Goal (ml)',
+              labelText: 'Цель по воде (мл)',
               suffixIcon: Icon(Icons.water_drop),
             ),
             keyboardType: TextInputType.number,
@@ -116,10 +119,25 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                         SizedBox(width: 8),
-                        Text('Saving...'),
+                        Text('Сохранение...'),
                       ],
                     )
-                    : const Text('Save Changes'),
+                    : const Text('Сохранить изменения'),
+          ),
+
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 16),
+
+          // Logout button
+          ElevatedButton.icon(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout),
+            label: const Text('Выйти из аккаунта'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
           ),
         ],
       ),
@@ -137,7 +155,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
 
     if (calorieGoal == null || waterGoal == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter valid numbers')),
+        const SnackBar(content: Text('Пожалуйста, введите корректные числа')),
       );
       return;
     }
@@ -155,9 +173,9 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Goals updated successfully')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Цели успешно обновлены')));
         Navigator.pop(
           context,
           true,
@@ -167,13 +185,42 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error updating goals: $e')));
+        ).showSnackBar(SnackBar(content: Text('Ошибка обновления целей: $e')));
       }
     } finally {
       if (mounted) {
         setState(() {
           _isSaving = false;
         });
+      }
+    }
+  }
+
+  // Method to handle user logout
+  Future<void> _logout() async {
+    try {
+      // If authService is provided, call its logout method
+      if (widget.authService != null) {
+        await widget.authService!.logout();
+      }
+
+      // Navigate to login screen and clear navigation stack
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder:
+                (context) => LoginScreen(
+                  authService: AuthService(DatabaseHelper.instance),
+                ),
+          ),
+          (route) => false, // Remove all previous routes
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка при выходе из аккаунта: $e')),
+        );
       }
     }
   }

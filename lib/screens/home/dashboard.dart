@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../models/user.dart';
 import '../../models/activity_entry.dart';
 import '../../models/meal_entry.dart';
+import '../../models/water_entry.dart';
 import '../../services/database/db_helper.dart';
 import '../../services/database/user_repository.dart';
 import '../../widgets/dashboard_card.dart';
@@ -15,10 +16,10 @@ class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.userId});
 
   @override
-  _DashboardScreenState createState() => _DashboardScreenState();
+  DashboardScreenState createState() => DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class DashboardScreenState extends State<DashboardScreen> {
   late Future<User> _userFuture;
   final UserRepository _userRepository = UserRepository(
     DatabaseHelper.instance,
@@ -43,29 +44,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadDailyData();
   }
 
+  // Public method to refresh data from outside
+  void refreshData() {
+    print("Dashboard refreshing data...");
+    // Force a complete refresh by recreating the user future
+    setState(() {
+      _userFuture = _userRepository.getUser(widget.userId);
+    });
+    _loadDailyData();
+  }
+
+  // Direct method to update calories consumed
+  void updateCaloriesConsumed(int calories) {
+    print("Directly updating calories consumed to: $calories");
+    setState(() {
+      _caloriesConsumed = calories;
+    });
+  }
+
   Future<void> _loadDailyData() async {
+    print("Loading daily data for date: $_selectedDate");
     final user = await _userFuture;
 
-    // Load meal entries
-    final mealEntries = await _dbHelper.getMealEntriesByDate(
-      widget.userId,
+    // Get total calories directly from the database
+    final calories = await _dbHelper.getTotalCaloriesForDate(
+      widget.userId, // Use widget.userId instead of hardcoded 1
       _selectedDate,
     );
+    print("Total calories from database: $calories");
+
+    // Load meal entries for other nutrition data
+    final mealEntries = await _dbHelper.getMealEntriesByDate(
+      widget.userId, // Use widget.userId instead of hardcoded 1
+      _selectedDate,
+    );
+    print("Loaded ${mealEntries.length} meal entries");
+
+    if (mealEntries.isNotEmpty) {
+      for (var meal in mealEntries) {
+        print(
+          "Meal: ${meal.name}, calories: ${meal.calories}, date: ${meal.dateTime}",
+        );
+      }
+    }
 
     // Load activity entries
     final activityEntries = await _dbHelper.getActivityEntriesByDate(
-      widget.userId,
+      widget.userId, // Use widget.userId instead of hardcoded 1
       _selectedDate,
     );
+    print("Loaded ${activityEntries.length} activity entries");
 
-    // Calculate nutrition totals
-    int calories = 0;
+    // Calculate other nutrition totals
     double protein = 0;
     double fats = 0;
     double carbs = 0;
 
     for (var meal in mealEntries) {
-      calories += meal.calories;
       protein += meal.proteins;
       fats += meal.fats;
       carbs += meal.carbs;
@@ -79,29 +114,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
       burned += activity.caloriesBurned;
       duration += activity.duration;
     }
+    print("Calculated calories burned: $burned");
 
-    // For now, we'll simulate water consumption (this would be tracked in a real app)
-    // In a real implementation, you would have a water tracking feature
-    int water = 0;
-    // Simulate some water consumption based on time of day
-    final now = DateTime.now();
-    final hourOfDay = now.hour;
-    if (hourOfDay > 8) water += 250; // Morning glass
-    if (hourOfDay > 10) water += 250; // Mid-morning
-    if (hourOfDay > 12) water += 250; // Lunch
-    if (hourOfDay > 15) water += 250; // Afternoon
-    if (hourOfDay > 18) water += 250; // Dinner
-    if (hourOfDay > 20) water += 250; // Evening
+    // Load water entries
+    final waterAmount = await _dbHelper.getTotalWaterForDate(
+      widget.userId, // Use widget.userId instead of hardcoded 1
+      _selectedDate,
+    );
+    print("Loaded water amount: $waterAmount");
 
-    setState(() {
-      _caloriesConsumed = calories;
-      _caloriesBurned = burned;
-      _waterConsumed = water;
-      _activityMinutes = duration;
-      _proteinConsumed = protein;
-      _fatsConsumed = fats;
-      _carbsConsumed = carbs;
-    });
+    if (mounted) {
+      setState(() {
+        _caloriesConsumed = calories;
+        _caloriesBurned = burned;
+        _waterConsumed = waterAmount;
+        _activityMinutes = duration;
+        _proteinConsumed = protein;
+        _fatsConsumed = fats;
+        _carbsConsumed = carbs;
+      });
+      print("Dashboard state updated with new values");
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -132,19 +165,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         if (snapshot.hasError) {
           return Scaffold(
-            body: Center(child: Text('Error: ${snapshot.error}')),
+            body: Center(child: Text('Ошибка: ${snapshot.error}')),
           );
         }
 
         final user = snapshot.data!;
+
+        // Debug output
+        print("Dashboard display values:");
+        print("Calories consumed: $_caloriesConsumed");
+        print("Calories burned: $_caloriesBurned");
+        print("Daily calorie goal: ${user.dailyCalorieGoal}");
+
         final remainingCalories =
             user.dailyCalorieGoal - _caloriesConsumed + _caloriesBurned;
         final waterProgress = (_waterConsumed / user.dailyWaterGoal) * 100;
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Dashboard'),
+            title: const Text('Главная'),
             actions: [
+              // Debug refresh button
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () {
+                  print("Manual refresh triggered");
+                  _loadDailyData();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Данные обновлены')),
+                  );
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.calendar_today),
                 onPressed: () => _selectDate(context),
@@ -182,7 +233,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             },
                           ),
                           Text(
-                            DateFormat('EEEE, MMMM d').format(_selectedDate),
+                            DateFormat('EEEE, d MMMM').format(_selectedDate),
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -215,7 +266,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Hello, ${user.name}!',
+                              'Привет, ${user.name}!',
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -224,13 +275,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             const SizedBox(height: 8),
                             Text(
                               DateFormat(
-                                        'EEEE, MMMM d',
+                                        'EEEE, d MMMM',
                                       ).format(_selectedDate) ==
                                       DateFormat(
-                                        'EEEE, MMMM d',
+                                        'EEEE, d MMMM',
                                       ).format(DateTime.now())
-                                  ? 'Here\'s your progress for today'
-                                  : 'Here\'s your progress for ${DateFormat('MMMM d').format(_selectedDate)}',
+                                  ? 'Вот ваш прогресс на сегодня'
+                                  : 'Вот ваш прогресс на ${DateFormat('d MMMM').format(_selectedDate)}',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.grey[600],
@@ -243,14 +294,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 _buildCircularProgress(
                                   value:
                                       _caloriesConsumed / user.dailyCalorieGoal,
-                                  label: 'Calories',
+                                  label: 'Калории',
                                   color: Colors.orange,
                                   centerText:
                                       '${(_caloriesConsumed / user.dailyCalorieGoal * 100).toStringAsFixed(0)}%',
                                 ),
                                 _buildCircularProgress(
                                   value: _waterConsumed / user.dailyWaterGoal,
-                                  label: 'Water',
+                                  label: 'Вода',
                                   color: Colors.blue,
                                   centerText:
                                       '${(_waterConsumed / user.dailyWaterGoal * 100).toStringAsFixed(0)}%',
@@ -259,7 +310,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   value:
                                       _activityMinutes /
                                       60, // Assuming 60 minutes is the goal
-                                  label: 'Activity',
+                                  label: 'Активность',
                                   color: Colors.green,
                                   centerText: '${_activityMinutes}m',
                                 ),
@@ -285,7 +336,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Calories',
+                                  'Калории',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -308,7 +359,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
                                 Text(
-                                  ' kcal remaining',
+                                  ' ккал осталось',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.grey[600],
@@ -391,7 +442,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Consumed: $_caloriesConsumed',
+                                      'Потреблено: $_caloriesConsumed',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey[600],
@@ -411,7 +462,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Burned: $_caloriesBurned',
+                                      'Сожжено: $_caloriesBurned',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey[600],
@@ -440,7 +491,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Water',
+                                  'Вода',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -482,7 +533,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${waterProgress.toStringAsFixed(0)}% of daily goal',
+                              '${waterProgress.toStringAsFixed(0)}% от дневной цели',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[600],
@@ -501,7 +552,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         bottom: 8.0,
                       ),
                       child: Text(
-                        'Today\'s Summary',
+                        'Сводка за сегодня',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -526,7 +577,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Icon(Icons.directions_run, color: Colors.green),
                                 const SizedBox(width: 8),
                                 const Text(
-                                  'Activity',
+                                  'Активность',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -541,13 +592,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 _buildSummaryItem(
                                   Icons.local_fire_department,
                                   '$_caloriesBurned',
-                                  'kcal burned',
+                                  'ккал сожжено',
                                   Colors.orange,
                                 ),
                                 _buildSummaryItem(
                                   Icons.timer,
                                   _formatDuration(_activityMinutes),
-                                  'active time',
+                                  'время активности',
                                   Colors.blue,
                                 ),
                               ],
@@ -573,7 +624,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Icon(Icons.restaurant, color: Colors.red),
                                 const SizedBox(width: 8),
                                 const Text(
-                                  'Nutrition',
+                                  'Питание',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -588,27 +639,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 _buildSummaryItem(
                                   Icons.food_bank,
                                   '$_caloriesConsumed',
-                                  'kcal consumed',
+                                  'ккал потреблено',
                                   Colors.red,
                                 ),
                                 _buildSummaryItem(
                                   null,
                                   '${_proteinConsumed.toStringAsFixed(1)}g',
-                                  'protein',
+                                  'белки',
                                   Colors.blue,
                                   textLabel: 'P',
                                 ),
                                 _buildSummaryItem(
                                   null,
                                   '${_fatsConsumed.toStringAsFixed(1)}g',
-                                  'fats',
+                                  'жиры',
                                   Colors.yellow.shade800,
                                   textLabel: 'F',
                                 ),
                                 _buildSummaryItem(
                                   null,
                                   '${_carbsConsumed.toStringAsFixed(1)}g',
-                                  'carbs',
+                                  'углеводы',
                                   Colors.green,
                                   textLabel: 'C',
                                 ),
@@ -627,7 +678,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         bottom: 8.0,
                       ),
                       child: Text(
-                        'Quick Actions',
+                        'Быстрые действия',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -649,14 +700,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             _buildActionButton(
                               context,
                               Icons.restaurant,
-                              'Add Meal',
+                              'Добавить еду',
                               Colors.red,
                               () => Navigator.pushNamed(context, '/food_diary'),
                             ),
                             _buildActionButton(
                               context,
                               Icons.directions_run,
-                              'Log Activity',
+                              'Записать активность',
                               Colors.green,
                               () =>
                                   Navigator.pushNamed(context, '/activity_log'),
@@ -664,18 +715,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             _buildActionButton(
                               context,
                               Icons.water_drop,
-                              'Add Water',
+                              'Добавить воду',
                               Colors.blue,
-                              () {
-                                // This would open a water tracking dialog in a real app
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Water tracking coming soon!',
-                                    ),
-                                  ),
-                                );
-                              },
+                              () => _showAddWaterDialog(context),
                             ),
                           ],
                         ),
@@ -836,5 +878,271 @@ class _DashboardScreenState extends State<DashboardScreen> {
       });
       _loadDailyData();
     }
+  }
+
+  Future<void> _showAddWaterDialog(BuildContext context) async {
+    int amount = 50; // Default amount (ml) - reduced from 100ml
+    bool isSubmitting = false; // Flag to prevent multiple submissions
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Добавить воду'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Выберите количество воды:'),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove),
+                          onPressed: () {
+                            if (amount > 25) {
+                              // Reduced minimum from 50ml to 25ml
+                              setDialogState(() {
+                                amount -=
+                                    25; // Smaller decrements (25ml instead of 50ml)
+                              });
+                            }
+                          },
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.blue),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '$amount ml',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () {
+                            if (amount < 500) {
+                              // Limit maximum amount
+                              setDialogState(() {
+                                amount +=
+                                    25; // Smaller increments (25ml instead of 50ml)
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            setDialogState(() {
+                              amount = 50;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              '50 ml',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            setDialogState(() {
+                              amount = 100;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              '100 ml',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            setDialogState(() {
+                              amount = 200;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              '200 ml',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Отмена'),
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                ),
+                TextButton(
+                  child: Text(isSubmitting ? 'Добавление...' : 'Добавить'),
+                  onPressed:
+                      isSubmitting
+                          ? null
+                          : () async {
+                            // Set flag to prevent multiple submissions
+                            setDialogState(() {
+                              isSubmitting = true;
+                            });
+
+                            try {
+                              print(
+                                'Starting water entry addition: $amount ml',
+                              );
+
+                              // Create a single water entry with exact amount
+                              final waterEntry = WaterEntry(
+                                amount: amount,
+                                dateTime: DateTime.now(),
+                                userId: widget.userId,
+                              );
+
+                              // Insert the entry into the database
+                              final entryId = await _dbHelper.insertWaterEntry(
+                                waterEntry,
+                              );
+                              print('Water entry added with ID: $entryId');
+
+                              // Get updated water amount directly from the database
+                              final updatedWaterAmount = await _dbHelper
+                                  .getTotalWaterForDate(
+                                    widget.userId,
+                                    _selectedDate,
+                                  );
+
+                              print(
+                                'Updated water amount: $updatedWaterAmount ml',
+                              );
+
+                              // Update state with new water amount
+                              if (mounted) {
+                                setState(() {
+                                  _waterConsumed = updatedWaterAmount;
+                                });
+                              }
+
+                              // Close the dialog
+                              if (dialogContext.mounted) {
+                                Navigator.of(dialogContext).pop();
+
+                                // Show confirmation
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Добавлено $amount мл воды'),
+                                    backgroundColor: Colors.blue,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              print('Error adding water: $e');
+
+                              // Reset submission flag on error
+                              if (dialogContext.mounted) {
+                                setDialogState(() {
+                                  isSubmitting = false;
+                                });
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Ошибка при добавлении воды'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickAmountButton(
+    BuildContext context,
+    int amount,
+    VoidCallback onPressed,
+  ) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          '$amount ml',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fit_track/models/user.dart';
 import 'package:fit_track/services/database/user_repository.dart';
+import 'package:fit_track/utils/calorie_calculator.dart';
 
 import '../../services/database/db_helper.dart';
 import '../home/main_app.dart';
@@ -11,7 +12,8 @@ class ProfileCompletionScreen extends StatefulWidget {
   const ProfileCompletionScreen({super.key, required this.user});
 
   @override
-  _ProfileCompletionScreenState createState() => _ProfileCompletionScreenState();
+  _ProfileCompletionScreenState createState() =>
+      _ProfileCompletionScreenState();
 }
 
 class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
@@ -20,7 +22,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   late TextEditingController _weightController;
   late TextEditingController _birthDateController;
   DateTime? _selectedBirthDate;
-  String _selectedGender = 'other';
+  String _selectedGender = 'male';
+  String _selectedFitnessGoal = 'maintenance';
+  String _selectedActivityLevel = 'moderate';
   bool _isLoading = false;
 
   @override
@@ -33,12 +37,15 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       text: widget.user.weight?.toString() ?? '',
     );
     _birthDateController = TextEditingController(
-      text: widget.user.birthDate != null
-          ? '${widget.user.birthDate!.day}/${widget.user.birthDate!.month}/${widget.user.birthDate!.year}'
-          : '',
+      text:
+          widget.user.birthDate != null
+              ? '${widget.user.birthDate!.day}.${widget.user.birthDate!.month}.${widget.user.birthDate!.year}'
+              : '',
     );
     _selectedGender = widget.user.gender;
     _selectedBirthDate = widget.user.birthDate;
+    _selectedFitnessGoal = widget.user.fitnessGoal;
+    _selectedActivityLevel = widget.user.activityLevel;
   }
 
   Future<void> _selectBirthDate(BuildContext context) async {
@@ -52,7 +59,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       setState(() {
         _selectedBirthDate = picked;
         _birthDateController.text =
-        "${picked.day}/${picked.month}/${picked.year}";
+            "${picked.day}.${picked.month}.${picked.year}";
       });
     }
   }
@@ -61,6 +68,30 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
+      // Calculate daily calorie goal based on user parameters
+      int calorieGoal = widget.user.dailyCalorieGoal;
+      final height = double.parse(_heightController.text);
+      final weight = double.parse(_weightController.text);
+
+      if (_selectedBirthDate != null) {
+        // Create temporary user for calorie calculation
+        final tempUser = User(
+          name: widget.user.name,
+          email: widget.user.email,
+          password: widget.user.password,
+          createdAt: widget.user.createdAt,
+          birthDate: _selectedBirthDate,
+          height: height,
+          weight: weight,
+          gender: _selectedGender,
+          fitnessGoal: _selectedFitnessGoal,
+          activityLevel: _selectedActivityLevel,
+        );
+
+        calorieGoal = CalorieCalculator.calculateDailyCalorieNeeds(tempUser);
+      }
+
+      // Create user with updated information and calculated calorie goal
       final updatedUser = User(
         id: widget.user.id,
         name: widget.user.name,
@@ -68,10 +99,12 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         password: widget.user.password,
         createdAt: widget.user.createdAt,
         birthDate: _selectedBirthDate,
-        height: double.parse(_heightController.text),
-        weight: double.parse(_weightController.text),
+        height: height,
+        weight: weight,
         gender: _selectedGender,
-        dailyCalorieGoal: widget.user.dailyCalorieGoal,
+        fitnessGoal: _selectedFitnessGoal,
+        activityLevel: _selectedActivityLevel,
+        dailyCalorieGoal: calorieGoal,
         dailyWaterGoal: widget.user.dailyWaterGoal,
       );
 
@@ -81,13 +114,11 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => MainApp(user: updatedUser),
-          ),
+          MaterialPageRoute(builder: (context) => MainApp(user: updatedUser)),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating profile: $e')),
+          SnackBar(content: Text('Ошибка обновления профиля: $e')),
         );
       } finally {
         setState(() => _isLoading = false);
@@ -98,7 +129,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Complete Your Profile')),
+      appBar: AppBar(title: const Text('Заполните ваш профиль')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -107,23 +138,23 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Help us personalize your experience',
+                'Помогите нам персонализировать ваш опыт',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
               TextFormField(
                 controller: _heightController,
                 decoration: const InputDecoration(
-                  labelText: 'Height (cm)',
+                  labelText: 'Рост (см)',
                   prefixIcon: Icon(Icons.height),
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your height';
+                    return 'Пожалуйста, введите ваш рост';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'Пожалуйста, введите корректное число';
                   }
                   return null;
                 },
@@ -132,16 +163,16 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
               TextFormField(
                 controller: _weightController,
                 decoration: const InputDecoration(
-                  labelText: 'Weight (kg)',
+                  labelText: 'Вес (кг)',
                   prefixIcon: Icon(Icons.monitor_weight),
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your weight';
+                    return 'Пожалуйста, введите ваш вес';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'Пожалуйста, введите корректное число';
                   }
                   return null;
                 },
@@ -150,62 +181,120 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
               TextFormField(
                 controller: _birthDateController,
                 decoration: const InputDecoration(
-                  labelText: 'Birth Date',
+                  labelText: 'Дата рождения',
                   prefixIcon: Icon(Icons.cake),
                 ),
                 readOnly: true,
                 onTap: () => _selectBirthDate(context),
               ),
               const SizedBox(height: 16),
-              const Text('Gender', style: TextStyle(fontSize: 16)),
-              Row(
-                children: [
-                  Radio<String>(
-                    value: 'male',
-                    groupValue: _selectedGender,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedGender = value!;
-                      });
-                    },
-                  ),
-                  const Text('Male'),
-                  Radio<String>(
-                    value: 'female',
-                    groupValue: _selectedGender,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedGender = value!;
-                      });
-                    },
-                  ),
-                  const Text('Female'),
-                  Radio<String>(
-                    value: 'other',
-                    groupValue: _selectedGender,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedGender = value!;
-                      });
-                    },
-                  ),
-                  const Text('Other'),
-                ],
+              const Text(
+                'Пол',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
+              _buildGenderSelector(),
+
+              const SizedBox(height: 16),
+              const Text(
+                'Какова ваша цель?',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              _buildFitnessGoalSelector(),
+
+              const SizedBox(height: 16),
+              const Text(
+                'Уровень активности',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              _buildActivityLevelSelector(),
               const SizedBox(height: 32),
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
-                onPressed: _completeProfile,
-                child: const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text('SAVE PROFILE', style: TextStyle(fontSize: 16)),
-                ),
-              ),
+                    onPressed: _completeProfile,
+                    child: const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        'СОХРАНИТЬ ПРОФИЛЬ',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildGenderSelector() {
+    return Row(
+      children: [
+        Expanded(
+          child: RadioListTile<String>(
+            title: const Text('Мужской'),
+            value: 'male',
+            groupValue: _selectedGender,
+            onChanged: (value) {
+              setState(() {
+                _selectedGender = value!;
+              });
+            },
+          ),
+        ),
+        Expanded(
+          child: RadioListTile<String>(
+            title: const Text('Женский'),
+            value: 'female',
+            groupValue: _selectedGender,
+            onChanged: (value) {
+              setState(() {
+                _selectedGender = value!;
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFitnessGoalSelector() {
+    final goals = CalorieCalculator.getFitnessGoals();
+
+    return Column(
+      children:
+          goals.entries.map((entry) {
+            return RadioListTile<String>(
+              title: Text(entry.value),
+              value: entry.key,
+              groupValue: _selectedFitnessGoal,
+              onChanged: (value) {
+                setState(() {
+                  _selectedFitnessGoal = value!;
+                });
+              },
+            );
+          }).toList(),
+    );
+  }
+
+  Widget _buildActivityLevelSelector() {
+    final activityLevels = CalorieCalculator.getActivityLevels();
+
+    return Column(
+      children:
+          activityLevels.entries.map((entry) {
+            return RadioListTile<String>(
+              title: Text(entry.value),
+              value: entry.key,
+              groupValue: _selectedActivityLevel,
+              onChanged: (value) {
+                setState(() {
+                  _selectedActivityLevel = value!;
+                });
+              },
+            );
+          }).toList(),
     );
   }
 
