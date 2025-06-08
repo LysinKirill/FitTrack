@@ -26,7 +26,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 5, // Increase version to trigger onCreate/onUpgrade
+      version: 6, // Increase version to trigger onCreate/onUpgrade
       onCreate: (db, version) {
         print('Creating new database tables');
         return _createDB(db, version);
@@ -98,6 +98,19 @@ class DatabaseHelper {
             )
           ''');
         }
+
+        if (oldVersion < 6) {
+          // Add fitness_goal and activity_level columns to users table
+          print(
+            'Adding fitness_goal and activity_level columns to users table',
+          );
+          await db.execute(
+            'ALTER TABLE users ADD COLUMN fitness_goal TEXT DEFAULT "maintenance"',
+          );
+          await db.execute(
+            'ALTER TABLE users ADD COLUMN activity_level TEXT DEFAULT "moderate"',
+          );
+        }
       },
       onOpen: (db) async {
         print('Database opened');
@@ -123,7 +136,9 @@ class DatabaseHelper {
       weight REAL,
       gender TEXT default 'other',
       daily_calorie_goal INTEGER NOT NULL,
-      daily_water_goal INTEGER NOT NULL
+      daily_water_goal INTEGER NOT NULL,
+      fitness_goal TEXT default 'maintenance',
+      activity_level TEXT default 'moderate'
     )
     ''');
 

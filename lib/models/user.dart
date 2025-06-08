@@ -10,6 +10,8 @@ class User {
   final String gender;
   final int dailyCalorieGoal;
   final int dailyWaterGoal;
+  final String fitnessGoal;
+  final String activityLevel;
 
   User({
     this.id,
@@ -20,9 +22,11 @@ class User {
     this.birthDate,
     this.height,
     this.weight,
-    this.gender = 'other',
+    this.gender = 'male',
     this.dailyCalorieGoal = 2000,
     this.dailyWaterGoal = 2000,
+    this.fitnessGoal = 'maintenance',
+    this.activityLevel = 'moderate',
   });
 
   Map<String, dynamic> toMap() {
@@ -38,6 +42,8 @@ class User {
       'gender': gender,
       'daily_calorie_goal': dailyCalorieGoal,
       'daily_water_goal': dailyWaterGoal,
+      'fitness_goal': fitnessGoal,
+      'activity_level': activityLevel,
     };
   }
 
@@ -48,12 +54,15 @@ class User {
       email: map['email'],
       password: map['password'],
       createdAt: DateTime.parse(map['created_at']),
-      birthDate: map['birth_date'] != null ? DateTime.parse(map['birth_date']) : null,
+      birthDate:
+          map['birth_date'] != null ? DateTime.parse(map['birth_date']) : null,
       height: map['height']?.toDouble() ?? 0.0,
       weight: map['weight']?.toDouble() ?? 0.0,
-      gender: map['gender'] ?? 'other',
+      gender: map['gender'] ?? 'male',
       dailyCalorieGoal: map['daily_calorie_goal'] ?? 2000,
       dailyWaterGoal: map['daily_water_goal'] ?? 2000,
+      fitnessGoal: map['fitness_goal'] ?? 'maintenance',
+      activityLevel: map['activity_level'] ?? 'moderate',
     );
   }
 }
