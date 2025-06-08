@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../models/user.dart';
 import '../../models/activity_entry.dart';
 import '../../models/meal_entry.dart';
+import '../../models/water_entry.dart';
 import '../../services/database/db_helper.dart';
 import '../../services/database/user_repository.dart';
 import '../../widgets/dashboard_card.dart';
@@ -80,23 +81,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       duration += activity.duration;
     }
 
-    // For now, we'll simulate water consumption (this would be tracked in a real app)
-    // In a real implementation, you would have a water tracking feature
-    int water = 0;
-    // Simulate some water consumption based on time of day
-    final now = DateTime.now();
-    final hourOfDay = now.hour;
-    if (hourOfDay > 8) water += 250; // Morning glass
-    if (hourOfDay > 10) water += 250; // Mid-morning
-    if (hourOfDay > 12) water += 250; // Lunch
-    if (hourOfDay > 15) water += 250; // Afternoon
-    if (hourOfDay > 18) water += 250; // Dinner
-    if (hourOfDay > 20) water += 250; // Evening
+    // Load water entries
+    final waterAmount = await _dbHelper.getTotalWaterForDate(
+      widget.userId,
+      _selectedDate,
+    );
 
     setState(() {
       _caloriesConsumed = calories;
       _caloriesBurned = burned;
-      _waterConsumed = water;
+      _waterConsumed = waterAmount;
       _activityMinutes = duration;
       _proteinConsumed = protein;
       _fatsConsumed = fats;
@@ -666,16 +660,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Icons.water_drop,
                               'Add Water',
                               Colors.blue,
-                              () {
-                                // This would open a water tracking dialog in a real app
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Water tracking coming soon!',
-                                    ),
-                                  ),
-                                );
-                              },
+                              () => _showAddWaterDialog(context),
                             ),
                           ],
                         ),
@@ -836,5 +821,143 @@ class _DashboardScreenState extends State<DashboardScreen> {
       });
       _loadDailyData();
     }
+  }
+
+  Future<void> _showAddWaterDialog(BuildContext context) async {
+    int amount = 250; // Default amount (ml)
+
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Water'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Select amount of water:'),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: () {
+                        if (amount > 50) {
+                          amount -= 50;
+                          (context as Element).markNeedsBuild();
+                        }
+                      },
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.blue),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '$amount ml',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        amount += 50;
+                        (context as Element).markNeedsBuild();
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildQuickAmountButton(context, 100, () {
+                      amount = 100;
+                      (context as Element).markNeedsBuild();
+                    }),
+                    _buildQuickAmountButton(context, 250, () {
+                      amount = 250;
+                      (context as Element).markNeedsBuild();
+                    }),
+                    _buildQuickAmountButton(context, 500, () {
+                      amount = 500;
+                      (context as Element).markNeedsBuild();
+                    }),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Add'),
+              onPressed: () async {
+                // Create and save water entry
+                final waterEntry = WaterEntry(
+                  amount: amount,
+                  dateTime: DateTime.now(),
+                  userId: widget.userId,
+                );
+
+                await _dbHelper.insertWaterEntry(waterEntry);
+
+                // Refresh data
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  _loadDailyData();
+
+                  // Show confirmation
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Added $amount ml of water'),
+                      backgroundColor: Colors.blue,
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickAmountButton(
+    BuildContext context,
+    int amount,
+    VoidCallback onPressed,
+  ) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          '$amount ml',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
+      ),
+    );
   }
 }

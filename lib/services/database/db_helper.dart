@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:fit_track/models/meal_entry.dart';
 import 'package:fit_track/models/activity_entry.dart';
 import 'package:fit_track/models/weight_entry.dart';
+import 'package:fit_track/models/water_entry.dart';
 import 'package:intl/intl.dart';
 
 class DatabaseHelper {
@@ -25,7 +26,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 4, // Increase version to trigger onCreate/onUpgrade
+      version: 5, // Increase version to trigger onCreate/onUpgrade
       onCreate: (db, version) {
         print('Creating new database tables');
         return _createDB(db, version);
@@ -78,6 +79,20 @@ class DatabaseHelper {
               weight REAL NOT NULL,
               date TEXT NOT NULL,
               note TEXT,
+              user_id INTEGER NOT NULL,
+              FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+          ''');
+        }
+
+        if (oldVersion < 5) {
+          // Add water_entries table if upgrading from version 4
+          print('Adding water_entries table');
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS water_entries (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              amount INTEGER NOT NULL,
+              date_time TEXT NOT NULL,
               user_id INTEGER NOT NULL,
               FOREIGN KEY (user_id) REFERENCES users (id)
             )
@@ -147,6 +162,16 @@ class DatabaseHelper {
         weight REAL NOT NULL,
         date TEXT NOT NULL,
         note TEXT,
+        user_id INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE water_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        amount INTEGER NOT NULL,
+        date_time TEXT NOT NULL,
         user_id INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users (id)
       )
@@ -430,5 +455,91 @@ class DatabaseHelper {
     final db = await instance.database;
     print('Clearing all weight entries');
     return await db.delete('weight_entries');
+  }
+
+  // Water Entries CRUD operations
+  Future<int> insertWaterEntry(WaterEntry waterEntry) async {
+    final db = await instance.database;
+    final map = waterEntry.toMap();
+
+    print('Inserting water entry: $map');
+
+    try {
+      final id = await db.insert('water_entries', map);
+      print('Successfully inserted water entry with ID: $id');
+      return id;
+    } catch (e) {
+      print('Error inserting water entry: $e');
+      return -1;
+    }
+  }
+
+  Future<List<WaterEntry>> getWaterEntriesByDate(
+    int userId,
+    DateTime date,
+  ) async {
+    final db = await instance.database;
+    final startDate = DateTime(date.year, date.month, date.day);
+    final endDate = DateTime(date.year, date.month, date.day, 23, 59, 59);
+    final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+
+    final startDateStr = dateFormat.format(startDate);
+    final endDateStr = dateFormat.format(endDate);
+
+    print(
+      'Querying water entries for userId: $userId, date range: $startDateStr to $endDateStr',
+    );
+
+    // First check if the table exists
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='water_entries'",
+    );
+
+    if (tables.isEmpty) {
+      print('water_entries table does not exist!');
+      return [];
+    }
+
+    final result = await db.query(
+      'water_entries',
+      where: 'user_id = ? AND date_time BETWEEN ? AND ?',
+      whereArgs: [userId, startDateStr, endDateStr],
+      orderBy: 'date_time ASC',
+    );
+
+    print('Query result count: ${result.length}');
+
+    return result.map((map) => WaterEntry.fromMap(map)).toList();
+  }
+
+  Future<int> getTotalWaterForDate(int userId, DateTime date) async {
+    final entries = await getWaterEntriesByDate(userId, date);
+    int total = 0;
+    for (var entry in entries) {
+      total += entry.amount;
+    }
+    return total;
+  }
+
+  Future<int> updateWaterEntry(WaterEntry waterEntry) async {
+    final db = await instance.database;
+    return await db.update(
+      'water_entries',
+      waterEntry.toMap(),
+      where: 'id = ?',
+      whereArgs: [waterEntry.id],
+    );
+  }
+
+  Future<int> deleteWaterEntry(int id) async {
+    final db = await instance.database;
+    return await db.delete('water_entries', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // For testing: clear all water entries
+  Future<int> clearWaterEntries() async {
+    final db = await instance.database;
+    print('Clearing all water entries');
+    return await db.delete('water_entries');
   }
 }
