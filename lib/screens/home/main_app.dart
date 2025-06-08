@@ -78,7 +78,7 @@ class _MainAppState extends State<MainApp> {
 
     // Try with user ID 1 (from logs)
     final calories = await dbHelper.getTotalCaloriesForDate(
-      1, // Use user ID 1 instead of widget.user.id!
+      widget.user.id!, // Fixed: Using actual user ID instead of hardcoded 1
       DateTime.now(),
     );
 
@@ -147,7 +147,9 @@ class _MainAppState extends State<MainApp> {
                 // Get latest calories directly from database
                 final dbHelper = DatabaseHelper.instance;
                 final calories = await dbHelper.getTotalCaloriesForDate(
-                  1, // Use user ID 1 instead of widget.user.id!
+                  widget
+                      .user
+                      .id!, // Fixed: Using actual user ID instead of hardcoded 1
                   DateTime.now(),
                 );
 

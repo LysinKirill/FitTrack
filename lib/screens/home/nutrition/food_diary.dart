@@ -35,36 +35,12 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   @override
   void initState() {
     super.initState();
-    _userId = widget.userId;
-    _ensureUserExists().then((_) => _loadMealEntries());
+    _userId = widget.userId; // Always use the user ID passed from the parent
+    _loadMealEntries(); // Load meal entries directly without _ensureUserExists
   }
 
-  // Debug: Create a user if none exists
-  Future<void> _ensureUserExists() async {
-    final db = await _dbHelper.database;
-    final users = await db.query('users');
-    print('Found ${users.length} users in database');
-
-    if (users.isEmpty) {
-      print('No users found, creating a test user');
-      final now = DateTime.now().toIso8601String();
-      final userId = await db.insert('users', {
-        'name': 'Test User',
-        'email': 'test@example.com',
-        'password': 'password123',
-        'created_at': now,
-      });
-      print('Created test user with ID: $userId');
-      setState(() {
-        _userId = userId;
-      });
-    } else {
-      print('Using existing user with ID: ${users.first['id']}');
-      setState(() {
-        _userId = users.first['id'] as int;
-      });
-    }
-  }
+  // Removed _ensureUserExists method that was causing the issue
+  // by overriding the correct user ID with the first user in the database
 
   Future<void> _loadMealEntries() async {
     print('Loading entries for date: ${_selectedDate.toString()}');
