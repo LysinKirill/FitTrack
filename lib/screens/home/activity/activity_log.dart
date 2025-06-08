@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fit_track/models/activity_entry.dart';
 import 'package:fit_track/services/database/db_helper.dart';
+import 'package:fit_track/widgets/add_activity_dialog.dart';
 
 class ActivityLogScreen extends StatefulWidget {
   final int userId;
@@ -17,8 +18,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
   DateTime _selectedDate = DateTime.now();
   List<ActivityEntry> _activityEntries = [];
   late int _userId;
-
-  // Activity summary
   int _totalCaloriesBurned = 0;
   int _totalDuration = 0;
 
@@ -30,12 +29,10 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
   }
 
   Future<void> _loadActivityEntries() async {
-    print('Loading activities for date: ${_selectedDate.toString()}');
     final entries = await _dbHelper.getActivityEntriesByDate(
       _userId,
       _selectedDate,
     );
-    print('Loaded ${entries.length} activities from database');
 
     setState(() {
       _activityEntries = entries;
@@ -75,9 +72,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     );
 
     if (result != null) {
-      print('Adding activity: ${result.name}, type: ${result.activityType}');
-      final id = await _dbHelper.insertActivityEntry(result, _userId);
-      print('Activity added with ID: $id');
+      await _dbHelper.insertActivityEntry(result, _userId);
       await _loadActivityEntries();
     }
   }
@@ -134,36 +129,16 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Group activity entries by activity type
     Map<String, List<ActivityEntry>> groupedEntries = {};
     for (var type in ActivityEntry.activityTypes) {
       groupedEntries[type] =
-          _activityEntries
-              .where((entry) => entry.activityType == type)
-              .toList();
+          _activityEntries.where((entry) => entry.activityType == type).toList();
     }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Журнал активности'),
         actions: [
-          // Debug button to add test activity
-          IconButton(
-            icon: const Icon(Icons.bug_report),
-            onPressed: _addTestActivityEntry,
-          ),
-          // Debug button to clear all entries
-          IconButton(
-            icon: const Icon(Icons.delete_forever),
-            onPressed: () async {
-              final count = await _dbHelper.clearActivityEntries();
-              print('Cleared $count activity entries');
-              _loadActivityEntries();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Удалено $count записей активности')),
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.calendar_today),
             onPressed: () => _selectDate(context),
@@ -172,7 +147,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
       ),
       body: Column(
         children: [
-          // Date display
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -210,8 +184,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
               ],
             ),
           ),
-
-          // Activity summary card
           Card(
             margin: const EdgeInsets.all(16.0),
             child: Padding(
@@ -251,46 +223,43 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
               ),
             ),
           ),
-
-          // Activity entries list
           Expanded(
-            child:
-                _activityEntries.isEmpty
-                    ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.directions_run,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Нет записей активности за этот день',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.add),
-                            label: const Text('Добавить активность'),
-                            onPressed: _addActivityEntry,
-                          ),
-                        ],
-                      ),
-                    )
-                    : ListView.builder(
-                      itemCount: ActivityEntry.activityTypes.length,
-                      itemBuilder: (context, index) {
-                        final activityType = ActivityEntry.activityTypes[index];
-                        final entries = groupedEntries[activityType] ?? [];
+            child: _activityEntries.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.directions_run,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Нет записей активности за этот день',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.add),
+                    label: const Text('Добавить активность'),
+                    onPressed: _addActivityEntry,
+                  ),
+                ],
+              ),
+            )
+                : ListView.builder(
+              itemCount: ActivityEntry.activityTypes.length,
+              itemBuilder: (context, index) {
+                final activityType = ActivityEntry.activityTypes[index];
+                final entries = groupedEntries[activityType] ?? [];
 
-                        if (entries.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
+                if (entries.isEmpty) {
+                  return const SizedBox.shrink();
+                }
 
                         return ExpansionTile(
                           title: Row(
@@ -408,162 +377,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class AddActivityDialog extends StatefulWidget {
-  final String? initialActivityType;
-  final DateTime selectedDate;
-
-  const AddActivityDialog({
-    super.key,
-    this.initialActivityType,
-    required this.selectedDate,
-  });
-
-  @override
-  State<AddActivityDialog> createState() => _AddActivityDialogState();
-}
-
-class _AddActivityDialogState extends State<AddActivityDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _durationController = TextEditingController();
-  final _caloriesController = TextEditingController();
-  final _notesController = TextEditingController();
-
-  String _activityType = 'Бег';
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initialActivityType != null) {
-      _activityType = widget.initialActivityType!;
-    }
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _durationController.dispose();
-    _caloriesController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Добавить активность'),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                value: _activityType,
-                decoration: const InputDecoration(labelText: 'Тип активности'),
-                items:
-                    ActivityEntry.activityTypes.map((type) {
-                      return DropdownMenuItem(value: type, child: Text(type));
-                    }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _activityType = value!;
-                  });
-                },
-              ),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Название активности',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите название активности';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _durationController,
-                decoration: const InputDecoration(
-                  labelText: 'Длительность (минуты)',
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите длительность';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Пожалуйста, введите корректное число';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _caloriesController,
-                decoration: const InputDecoration(labelText: 'Сожжено калорий'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите количество сожженных калорий';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Пожалуйста, введите корректное число';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Заметки (необязательно)',
-                ),
-                maxLines: 2,
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Отмена'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              // Use the selected date with current time
-              final now = DateTime.now();
-              final dateTime = DateTime(
-                widget.selectedDate.year,
-                widget.selectedDate.month,
-                widget.selectedDate.day,
-                now.hour,
-                now.minute,
-                now.second,
-              );
-
-              final activityEntry = ActivityEntry(
-                name: _nameController.text,
-                activityType: _activityType,
-                duration: int.parse(_durationController.text),
-                caloriesBurned: int.parse(_caloriesController.text),
-                dateTime: dateTime,
-                notes:
-                    _notesController.text.isEmpty
-                        ? null
-                        : _notesController.text,
-              );
-              Navigator.of(context).pop(activityEntry);
-            }
-          },
-          child: const Text('Добавить'),
-        ),
-      ],
     );
   }
 }

@@ -7,10 +7,7 @@ class AuthService {
 
   AuthService(this.dbHelper);
 
-  // Method to handle user logout
   Future<void> logout() async {
-    // In a more complex app, you might clear tokens, cached data, etc.
-    // For this app, we just need to return to login screen
     return Future.value();
   }
 
