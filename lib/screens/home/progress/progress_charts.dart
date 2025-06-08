@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui' as ui;
 import 'package:fit_track/models/activity_entry.dart';
 import 'package:fit_track/models/meal_entry.dart';
 import 'package:fit_track/models/user.dart';
@@ -29,6 +30,9 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
 
   // Data for weight chart
   List<WeightEntry> _weightEntries = [];
+
+  // Hover state for weight points
+  int? _hoveredPointIndex;
 
   @override
   void initState() {
@@ -401,12 +405,21 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       ..sort((a, b) => a.date.compareTo(b.date));
 
     // Find min and max weight for chart scaling
-    final minWeight = sortedEntries
-        .map((e) => e.weight)
-        .reduce((a, b) => a < b ? a : b);
-    final maxWeight = sortedEntries
-        .map((e) => e.weight)
-        .reduce((a, b) => a > b ? a : b);
+    double minWeight;
+    double maxWeight;
+
+    if (sortedEntries.length == 1) {
+      // If there's only one entry, set min and max to create a range around it
+      minWeight = sortedEntries[0].weight * 0.95; // 5% below
+      maxWeight = sortedEntries[0].weight * 1.05; // 5% above
+    } else {
+      minWeight = sortedEntries
+          .map((e) => e.weight)
+          .reduce((a, b) => a < b ? a : b);
+      maxWeight = sortedEntries
+          .map((e) => e.weight)
+          .reduce((a, b) => a > b ? a : b);
+    }
 
     // Add some padding to min and max for better visualization
     final chartMinWeight = (minWeight - 1.0).clamp(0.0, double.infinity);
@@ -425,6 +438,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                 maxWeight: chartMaxWeight,
                 lineColor: Theme.of(context).primaryColor,
                 pointColor: Theme.of(context).colorScheme.secondary,
+                hoveredPointIndex: null,
               ),
             ),
           ),
@@ -446,6 +460,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       ),
     );
   }
+
+  // Removed hover-related methods as we're now always showing weight values
 
   void _showAddWeightDialog(BuildContext context, User user) {
     final weightController = TextEditingController(
@@ -570,6 +586,7 @@ class WeightChartPainter extends CustomPainter {
   final double maxWeight;
   final Color lineColor;
   final Color pointColor;
+  final int? hoveredPointIndex;
 
   WeightChartPainter({
     required this.weightEntries,
@@ -577,6 +594,7 @@ class WeightChartPainter extends CustomPainter {
     required this.maxWeight,
     required this.lineColor,
     required this.pointColor,
+    this.hoveredPointIndex,
   });
 
   @override
@@ -597,7 +615,22 @@ class WeightChartPainter extends CustomPainter {
 
     final path = Path();
 
-    // Calculate x and y positions
+    // Handle single entry case
+    if (weightEntries.length == 1) {
+      final entry = weightEntries.first;
+      final x = size.width / 2; // Center the single point
+      final y = _calculateYPosition(entry.weight, size.height);
+
+      // Draw the point
+      canvas.drawCircle(Offset(x, y), 5, pointPaint);
+
+      // Draw the weight value
+      _drawWeightValue(canvas, entry.weight, x, y);
+
+      return;
+    }
+
+    // Calculate x and y positions for multiple entries
     final firstEntry = weightEntries.first;
     final firstX = 0.0;
     final firstY = _calculateYPosition(firstEntry.weight, size.height);
@@ -616,15 +649,16 @@ class WeightChartPainter extends CustomPainter {
       }
 
       // Draw point
-      canvas.drawCircle(Offset(x, y), 4, pointPaint);
+      canvas.drawCircle(Offset(x, y), 5, pointPaint);
+
+      // Draw weight value for each point
+      _drawWeightValue(canvas, entry.weight, x, y);
     }
 
     // Draw the path
     canvas.drawPath(path, paint);
 
-    // Skip drawing text labels for now to avoid TextDirection issues
-    // We'll draw simple markers instead
-
+    // Draw min and max weight markers
     final labelPaint =
         Paint()
           ..color = Colors.grey[600]!
@@ -637,11 +671,63 @@ class WeightChartPainter extends CustomPainter {
     canvas.drawCircle(Offset(0, 0), 3, labelPaint);
   }
 
+  // Helper method to draw weight value
+  void _drawWeightValue(Canvas canvas, double weight, double x, double y) {
+    // Create a background for better readability
+    final bgPaint =
+        Paint()
+          ..color = Colors.white.withOpacity(0.8)
+          ..style = PaintingStyle.fill;
+
+    final textValue = '${weight.toStringAsFixed(1)} kg';
+
+    final paragraphBuilder =
+        ui.ParagraphBuilder(
+            ui.ParagraphStyle(
+              textAlign: ui.TextAlign.center,
+              fontSize: 14,
+              fontWeight: ui.FontWeight.bold,
+            ),
+          )
+          ..pushStyle(ui.TextStyle(color: Colors.black))
+          ..addText(textValue);
+
+    final paragraph =
+        paragraphBuilder.build()..layout(ui.ParagraphConstraints(width: 70));
+
+    // Position the text above the point
+    final textX = x - paragraph.width / 2;
+    final textY = y - paragraph.height - 10;
+
+    // Draw background with padding
+    final padding = 4.0;
+    final bgRect = Rect.fromLTWH(
+      textX - padding,
+      textY - padding,
+      paragraph.width + padding * 2,
+      paragraph.height + padding * 2,
+    );
+
+    final bgRRect = RRect.fromRectAndRadius(bgRect, const Radius.circular(4));
+
+    canvas.drawRRect(bgRRect, bgPaint);
+
+    // Draw text
+    canvas.drawParagraph(paragraph, Offset(textX, textY));
+  }
+
   double _calculateYPosition(double weight, double height) {
     // Invert y-axis (0 is at top in canvas)
     return height - ((weight - minWeight) / (maxWeight - minWeight) * height);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    if (oldDelegate is WeightChartPainter) {
+      return oldDelegate.hoveredPointIndex != hoveredPointIndex;
+    }
+    return true;
+  }
 }
+
+// WeightValuePainter class removed as we're now always showing weight values directly
