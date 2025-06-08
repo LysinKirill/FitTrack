@@ -289,7 +289,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 16),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
                                 _buildCircularProgress(
                                   value:
@@ -299,6 +299,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                                   centerText:
                                       '${(_caloriesConsumed / user.dailyCalorieGoal * 100).toStringAsFixed(0)}%',
                                 ),
+                                const SizedBox(width: 0),
                                 _buildCircularProgress(
                                   value: _waterConsumed / user.dailyWaterGoal,
                                   label: 'Вода',
@@ -306,6 +307,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                                   centerText:
                                       '${(_waterConsumed / user.dailyWaterGoal * 100).toStringAsFixed(0)}%',
                                 ),
+                                const SizedBox(width: 0),
                                 _buildCircularProgress(
                                   value:
                                       _activityMinutes /
@@ -349,24 +351,58 @@ class DashboardScreenState extends State<DashboardScreen> {
                               ],
                             ),
                             const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Text(
-                                  '$remainingCalories',
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
+                            remainingCalories < 0
+                                ? Container(
+                                  width: double.infinity,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'ВЫ УЖЕ ПРЕВЫСИЛИ НОРМУ КАЛОРИЙ',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                      Text(
+                                        'НА ${remainingCalories.abs()} ККАЛ',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                      const Text(
+                                        'ХВАТИТ ЖРАТЬ',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                                )
+                                : Row(
+                                  children: [
+                                    Text(
+                                      '$remainingCalories',
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      ' ккал осталось',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  ' ккал осталось',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
                             const SizedBox(height: 8),
                             Row(
                               children: [
@@ -787,30 +823,42 @@ class DashboardScreenState extends State<DashboardScreen> {
     return Column(
       children: [
         SizedBox(
-          width: 60,
-          height: 60,
+          width: 150, // Измените размеры здесь
+          height: 150, // Измените размеры здесь
           child: Stack(
+            alignment: Alignment.center,
             children: [
-              CircularProgressIndicator(
-                value: clampedValue,
-                backgroundColor: color.withOpacity(0.2),
-                valueColor: AlwaysStoppedAnimation<Color>(color),
-                strokeWidth: 8,
+              SizedBox(
+                width: 80, // Обеспечим точный размер здесь
+                height: 80, // Обеспечим точный размер здесь
+                child: CircularProgressIndicator(
+                  value: clampedValue,
+                  backgroundColor: color.withOpacity(0.2),
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                  strokeWidth: 12,
+                ),
               ),
-              Center(
-                child: Text(
-                  centerText,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: color,
+              Container(
+                width: 90, // Держите это меньше общего размера
+                height: 90, // Держите это меньше общего размера
+                alignment: Alignment.center,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    centerText,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 1),
         Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
       ],
     );
