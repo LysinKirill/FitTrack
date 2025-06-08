@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ProgressChartsScreen extends StatelessWidget {
-  const ProgressChartsScreen({super.key});
+  final int userId;
+  const ProgressChartsScreen({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {

@@ -4,8 +4,9 @@ import 'package:fit_track/models/meal_entry.dart';
 import 'package:fit_track/services/database/db_helper.dart';
 import 'package:fit_track/models/user.dart';
 
-class FoodDiaryScreen extends StatefulWidget {
-  const FoodDiaryScreen({super.key});
+class FoodDiaryScreen extends StatelessWidget {
+  final int userId;
+  const FoodDiaryScreen({super.key, required this.userId});
 
   @override
   State<FoodDiaryScreen> createState() => _FoodDiaryScreenState();
