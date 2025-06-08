@@ -68,14 +68,14 @@ class DashboardScreenState extends State<DashboardScreen> {
 
     // Get total calories directly from the database
     final calories = await _dbHelper.getTotalCaloriesForDate(
-      1, // Use widget.userId instead of hardcoded 1
+      widget.userId, // Use widget.userId instead of hardcoded 1
       _selectedDate,
     );
     print("Total calories from database: $calories");
 
     // Load meal entries for other nutrition data
     final mealEntries = await _dbHelper.getMealEntriesByDate(
-      1, // Use widget.userId instead of hardcoded 1
+      widget.userId, // Use widget.userId instead of hardcoded 1
       _selectedDate,
     );
     print("Loaded ${mealEntries.length} meal entries");
@@ -90,7 +90,7 @@ class DashboardScreenState extends State<DashboardScreen> {
 
     // Load activity entries
     final activityEntries = await _dbHelper.getActivityEntriesByDate(
-      1, // Use widget.userId instead of hardcoded 1
+      widget.userId, // Use widget.userId instead of hardcoded 1
       _selectedDate,
     );
     print("Loaded ${activityEntries.length} activity entries");
@@ -118,7 +118,7 @@ class DashboardScreenState extends State<DashboardScreen> {
 
     // Load water entries
     final waterAmount = await _dbHelper.getTotalWaterForDate(
-      1, // Use widget.userId instead of hardcoded 1
+      widget.userId, // Use widget.userId instead of hardcoded 1
       _selectedDate,
     );
     print("Loaded water amount: $waterAmount");
@@ -881,123 +881,241 @@ class DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _showAddWaterDialog(BuildContext context) async {
-    int amount = 250; // Default amount (ml)
+    int amount = 50; // Default amount (ml) - reduced from 100ml
+    bool isSubmitting = false; // Flag to prevent multiple submissions
 
     return showDialog<void>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Добавить воду'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Выберите количество воды:'),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Добавить воду'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove),
-                      onPressed: () {
-                        if (amount > 50) {
-                          amount -= 50;
-                          (context as Element).markNeedsBuild();
-                        }
-                      },
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.blue),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '$amount ml',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                    const Text('Выберите количество воды:'),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove),
+                          onPressed: () {
+                            if (amount > 25) {
+                              // Reduced minimum from 50ml to 25ml
+                              setDialogState(() {
+                                amount -=
+                                    25; // Smaller decrements (25ml instead of 50ml)
+                              });
+                            }
+                          },
                         ),
-                      ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.blue),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '$amount ml',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () {
+                            if (amount < 500) {
+                              // Limit maximum amount
+                              setDialogState(() {
+                                amount +=
+                                    25; // Smaller increments (25ml instead of 50ml)
+                              });
+                            }
+                          },
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () {
-                        amount += 50;
-                        (context as Element).markNeedsBuild();
-                      },
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            setDialogState(() {
+                              amount = 50;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              '50 ml',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            setDialogState(() {
+                              amount = 100;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              '100 ml',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            setDialogState(() {
+                              amount = 200;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              '200 ml',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildQuickAmountButton(context, 100, () {
-                      amount = 100;
-                      (context as Element).markNeedsBuild();
-                    }),
-                    _buildQuickAmountButton(context, 250, () {
-                      amount = 250;
-                      (context as Element).markNeedsBuild();
-                    }),
-                    _buildQuickAmountButton(context, 500, () {
-                      amount = 500;
-                      (context as Element).markNeedsBuild();
-                    }),
-                  ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Отмена'),
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                ),
+                TextButton(
+                  child: Text(isSubmitting ? 'Добавление...' : 'Добавить'),
+                  onPressed:
+                      isSubmitting
+                          ? null
+                          : () async {
+                            // Set flag to prevent multiple submissions
+                            setDialogState(() {
+                              isSubmitting = true;
+                            });
+
+                            try {
+                              print(
+                                'Starting water entry addition: $amount ml',
+                              );
+
+                              // Create a single water entry with exact amount
+                              final waterEntry = WaterEntry(
+                                amount: amount,
+                                dateTime: DateTime.now(),
+                                userId: widget.userId,
+                              );
+
+                              // Insert the entry into the database
+                              final entryId = await _dbHelper.insertWaterEntry(
+                                waterEntry,
+                              );
+                              print('Water entry added with ID: $entryId');
+
+                              // Get updated water amount directly from the database
+                              final updatedWaterAmount = await _dbHelper
+                                  .getTotalWaterForDate(
+                                    widget.userId,
+                                    _selectedDate,
+                                  );
+
+                              print(
+                                'Updated water amount: $updatedWaterAmount ml',
+                              );
+
+                              // Update state with new water amount
+                              if (mounted) {
+                                setState(() {
+                                  _waterConsumed = updatedWaterAmount;
+                                });
+                              }
+
+                              // Close the dialog
+                              if (dialogContext.mounted) {
+                                Navigator.of(dialogContext).pop();
+
+                                // Show confirmation
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Добавлено $amount мл воды'),
+                                    backgroundColor: Colors.blue,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              print('Error adding water: $e');
+
+                              // Reset submission flag on error
+                              if (dialogContext.mounted) {
+                                setDialogState(() {
+                                  isSubmitting = false;
+                                });
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Ошибка при добавлении воды'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          },
                 ),
               ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Отмена'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Добавить'),
-              onPressed: () async {
-                // Create and save water entry
-                final waterEntry = WaterEntry(
-                  amount: amount,
-                  dateTime: DateTime.now(),
-                  userId: widget.userId,
-                );
-
-                await _dbHelper.insertWaterEntry(waterEntry);
-
-                // Get updated water amount
-                final updatedWaterAmount = await _dbHelper.getTotalWaterForDate(
-                  widget.userId, // Use widget.userId instead of hardcoded 1
-                  _selectedDate,
-                );
-
-                // Update state with new water amount
-                setState(() {
-                  _waterConsumed = updatedWaterAmount;
-                });
-
-                // Refresh data and UI
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-
-                  // Show confirmation
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Добавлено $amount мл воды'),
-                      backgroundColor: Colors.blue,
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
+            );
+          },
         );
       },
     );
