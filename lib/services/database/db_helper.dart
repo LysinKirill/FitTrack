@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:fit_track/models/meal_entry.dart';
+import 'package:fit_track/models/activity_entry.dart';
 import 'package:intl/intl.dart';
 
 class DatabaseHelper {
@@ -23,7 +24,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2, // Increase version to trigger onCreate/onUpgrade
+      version: 3, // Increase version to trigger onCreate/onUpgrade
       onCreate: (db, version) {
         print('Creating new database tables');
         return _createDB(db, version);
@@ -43,6 +44,24 @@ class DatabaseHelper {
               fats REAL NOT NULL,
               carbs REAL NOT NULL,
               date_time TEXT NOT NULL,
+              user_id INTEGER NOT NULL,
+              FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+          ''');
+        }
+
+        if (oldVersion < 3) {
+          // Add activity_entries table if upgrading from version 2
+          print('Adding activity_entries table');
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS activity_entries (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT NOT NULL,
+              activity_type TEXT NOT NULL,
+              duration INTEGER NOT NULL,
+              calories_burned INTEGER NOT NULL,
+              date_time TEXT NOT NULL,
+              notes TEXT,
               user_id INTEGER NOT NULL,
               FOREIGN KEY (user_id) REFERENCES users (id)
             )
@@ -87,6 +106,20 @@ class DatabaseHelper {
         fats REAL NOT NULL,
         carbs REAL NOT NULL,
         date_time TEXT NOT NULL,
+        user_id INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE activity_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        activity_type TEXT NOT NULL,
+        duration INTEGER NOT NULL,
+        calories_burned INTEGER NOT NULL,
+        date_time TEXT NOT NULL,
+        notes TEXT,
         user_id INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users (id)
       )
@@ -183,5 +216,91 @@ class DatabaseHelper {
   Future close() async {
     final db = await instance.database;
     db.close();
+  }
+
+  // Activity Entries CRUD operations
+  Future<int> insertActivityEntry(
+    ActivityEntry activityEntry,
+    int userId,
+  ) async {
+    final db = await instance.database;
+    final map = activityEntry.toMap();
+    map['user_id'] = userId;
+
+    print('Inserting activity entry: $map');
+
+    try {
+      final id = await db.insert('activity_entries', map);
+      print('Successfully inserted activity entry with ID: $id');
+      return id;
+    } catch (e) {
+      print('Error inserting activity entry: $e');
+      return -1;
+    }
+  }
+
+  Future<List<ActivityEntry>> getActivityEntriesByDate(
+    int userId,
+    DateTime date,
+  ) async {
+    final db = await instance.database;
+    final startDate = DateTime(date.year, date.month, date.day);
+    final endDate = DateTime(date.year, date.month, date.day, 23, 59, 59);
+    final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+
+    final startDateStr = dateFormat.format(startDate);
+    final endDateStr = dateFormat.format(endDate);
+
+    print(
+      'Querying activities for userId: $userId, date range: $startDateStr to $endDateStr',
+    );
+
+    // First check if the table exists
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='activity_entries'",
+    );
+    print('Tables found: ${tables.length}');
+
+    if (tables.isEmpty) {
+      print('activity_entries table does not exist!');
+      return [];
+    }
+
+    final result = await db.query(
+      'activity_entries',
+      where: 'user_id = ? AND date_time BETWEEN ? AND ?',
+      whereArgs: [userId, startDateStr, endDateStr],
+      orderBy: 'date_time ASC',
+    );
+
+    print('Query result count: ${result.length}');
+
+    return result.map((map) => ActivityEntry.fromMap(map)).toList();
+  }
+
+  Future<int> updateActivityEntry(ActivityEntry activityEntry) async {
+    final db = await instance.database;
+    return await db.update(
+      'activity_entries',
+      activityEntry.toMap(),
+      where: 'id = ?',
+      whereArgs: [activityEntry.id],
+    );
+  }
+
+  Future<int> deleteActivityEntry(int id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'activity_entries',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // For testing: clear all activity entries
+  Future<int> clearActivityEntries() async {
+    final db = await instance.database;
+    print('Clearing all activity entries');
+    return await db.delete('activity_entries');
   }
 }
