@@ -4,8 +4,9 @@ import 'package:fit_track/models/meal_entry.dart';
 import 'package:fit_track/services/database/db_helper.dart';
 import 'package:fit_track/models/user.dart';
 
-class FoodDiaryScreen extends StatelessWidget {
+class FoodDiaryScreen extends StatefulWidget {
   final int userId;
+
   const FoodDiaryScreen({super.key, required this.userId});
 
   @override
@@ -16,7 +17,20 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   DateTime _selectedDate = DateTime.now();
   List<MealEntry> _mealEntries = [];
-  int _userId = 1; // This should be replaced with the actual logged-in user ID
+  late int _userId;
+
+  // Nutrition summary
+  int _totalCalories = 0;
+  double _totalProteins = 0;
+  double _totalFats = 0;
+  double _totalCarbs = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _userId = widget.userId;
+    _ensureUserExists().then((_) => _loadMealEntries());
+  }
 
   // Debug: Create a user if none exists
   Future<void> _ensureUserExists() async {
@@ -43,18 +57,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
         _userId = users.first['id'] as int;
       });
     }
-  }
-
-  // Nutrition summary
-  int _totalCalories = 0;
-  double _totalProteins = 0;
-  double _totalFats = 0;
-  double _totalCarbs = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _ensureUserExists().then((_) => _loadMealEntries());
   }
 
   Future<void> _loadMealEntries() async {
