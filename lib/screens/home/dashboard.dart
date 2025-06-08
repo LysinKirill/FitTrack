@@ -68,14 +68,14 @@ class DashboardScreenState extends State<DashboardScreen> {
 
     // Get total calories directly from the database
     final calories = await _dbHelper.getTotalCaloriesForDate(
-      widget.userId, // Use widget.userId instead of hardcoded 1
+      1, // Use widget.userId instead of hardcoded 1
       _selectedDate,
     );
     print("Total calories from database: $calories");
 
     // Load meal entries for other nutrition data
     final mealEntries = await _dbHelper.getMealEntriesByDate(
-      widget.userId, // Use widget.userId instead of hardcoded 1
+      1, // Use widget.userId instead of hardcoded 1
       _selectedDate,
     );
     print("Loaded ${mealEntries.length} meal entries");
@@ -90,7 +90,7 @@ class DashboardScreenState extends State<DashboardScreen> {
 
     // Load activity entries
     final activityEntries = await _dbHelper.getActivityEntriesByDate(
-      widget.userId, // Use widget.userId instead of hardcoded 1
+      1, // Use widget.userId instead of hardcoded 1
       _selectedDate,
     );
     print("Loaded ${activityEntries.length} activity entries");
@@ -118,7 +118,7 @@ class DashboardScreenState extends State<DashboardScreen> {
 
     // Load water entries
     final waterAmount = await _dbHelper.getTotalWaterForDate(
-      widget.userId, // Use widget.userId instead of hardcoded 1
+      1, // Use widget.userId instead of hardcoded 1
       _selectedDate,
     );
     print("Loaded water amount: $waterAmount");
