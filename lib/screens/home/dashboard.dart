@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/user.dart';
-import '../../models/activity_entry.dart';
-import '../../models/meal_entry.dart';
 import '../../models/water_entry.dart';
 import '../../services/database/db_helper.dart';
 import '../../services/database/user_repository.dart';
-import '../../widgets/dashboard_card.dart';
 import '../../widgets/setting_bottom_sheet.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -28,10 +25,9 @@ class DashboardScreenState extends State<DashboardScreen> {
 
   DateTime _selectedDate = DateTime.now();
 
-  // Daily summary data
   int _caloriesConsumed = 0;
   int _caloriesBurned = 0;
-  int _waterConsumed = 0; // in ml
+  int _waterConsumed = 0;
   int _activityMinutes = 0;
   double _proteinConsumed = 0;
   double _fatsConsumed = 0;
@@ -44,58 +40,35 @@ class DashboardScreenState extends State<DashboardScreen> {
     _loadDailyData();
   }
 
-  // Public method to refresh data from outside
   void refreshData() {
-    print("Dashboard refreshing data...");
-    // Force a complete refresh by recreating the user future
     setState(() {
       _userFuture = _userRepository.getUser(widget.userId);
     });
     _loadDailyData();
   }
 
-  // Direct method to update calories consumed
   void updateCaloriesConsumed(int calories) {
-    print("Directly updating calories consumed to: $calories");
     setState(() {
       _caloriesConsumed = calories;
     });
   }
 
   Future<void> _loadDailyData() async {
-    print("Loading daily data for date: $_selectedDate");
-    final user = await _userFuture;
-
-    // Get total calories directly from the database
     final calories = await _dbHelper.getTotalCaloriesForDate(
-      widget.userId, // Use widget.userId instead of hardcoded 1
+      widget.userId,
       _selectedDate,
     );
-    print("Total calories from database: $calories");
 
-    // Load meal entries for other nutrition data
     final mealEntries = await _dbHelper.getMealEntriesByDate(
-      widget.userId, // Use widget.userId instead of hardcoded 1
+      widget.userId,
       _selectedDate,
     );
-    print("Loaded ${mealEntries.length} meal entries");
 
-    if (mealEntries.isNotEmpty) {
-      for (var meal in mealEntries) {
-        print(
-          "Meal: ${meal.name}, calories: ${meal.calories}, date: ${meal.dateTime}",
-        );
-      }
-    }
-
-    // Load activity entries
     final activityEntries = await _dbHelper.getActivityEntriesByDate(
-      widget.userId, // Use widget.userId instead of hardcoded 1
+      widget.userId,
       _selectedDate,
     );
-    print("Loaded ${activityEntries.length} activity entries");
 
-    // Calculate other nutrition totals
     double protein = 0;
     double fats = 0;
     double carbs = 0;
@@ -106,7 +79,6 @@ class DashboardScreenState extends State<DashboardScreen> {
       carbs += meal.carbs;
     }
 
-    // Calculate activity totals
     int burned = 0;
     int duration = 0;
 
@@ -114,14 +86,11 @@ class DashboardScreenState extends State<DashboardScreen> {
       burned += activity.caloriesBurned;
       duration += activity.duration;
     }
-    print("Calculated calories burned: $burned");
 
-    // Load water entries
     final waterAmount = await _dbHelper.getTotalWaterForDate(
-      widget.userId, // Use widget.userId instead of hardcoded 1
+      widget.userId,
       _selectedDate,
     );
-    print("Loaded water amount: $waterAmount");
 
     if (mounted) {
       setState(() {
@@ -133,7 +102,6 @@ class DashboardScreenState extends State<DashboardScreen> {
         _fatsConsumed = fats;
         _carbsConsumed = carbs;
       });
-      print("Dashboard state updated with new values");
     }
   }
 
@@ -170,13 +138,6 @@ class DashboardScreenState extends State<DashboardScreen> {
         }
 
         final user = snapshot.data!;
-
-        // Debug output
-        print("Dashboard display values:");
-        print("Calories consumed: $_caloriesConsumed");
-        print("Calories burned: $_caloriesBurned");
-        print("Daily calorie goal: ${user.dailyCalorieGoal}");
-
         final remainingCalories =
             user.dailyCalorieGoal - _caloriesConsumed + _caloriesBurned;
         final waterProgress = (_waterConsumed / user.dailyWaterGoal) * 100;
@@ -185,11 +146,9 @@ class DashboardScreenState extends State<DashboardScreen> {
           appBar: AppBar(
             title: const Text('Home'),
             actions: [
-              // Debug refresh button
               IconButton(
                 icon: const Icon(Icons.refresh),
                 onPressed: () {
-                  print("Manual refresh triggered");
                   _loadDailyData();
                   ScaffoldMessenger.of(
                     context,
@@ -299,6 +258,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                                   centerText:
                                       '${(_caloriesConsumed / user.dailyCalorieGoal * 100).toStringAsFixed(0)}%',
                                 ),
+                                const SizedBox(width: 0),
                                 _buildCircularProgress(
                                   value: _waterConsumed / user.dailyWaterGoal,
                                   label: 'Water',
@@ -306,6 +266,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                                   centerText:
                                       '${(_waterConsumed / user.dailyWaterGoal * 100).toStringAsFixed(0)}%',
                                 ),
+                                const SizedBox(width: 0),
                                 _buildCircularProgress(
                                   value:
                                       _activityMinutes /
@@ -321,7 +282,6 @@ class DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
 
-                    // Main cards - Calories
                     Card(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -538,7 +498,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                             Row(
                               children: [
                                 Text(
-                                  '${(_waterConsumed / 1000).toStringAsFixed(1)}',
+                                  (_waterConsumed / 1000).toStringAsFixed(1),
                                   style: const TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -815,37 +775,36 @@ class DashboardScreenState extends State<DashboardScreen> {
     required Color color,
     required String centerText,
   }) {
-    // Ensure value is between 0 and 1
     final clampedValue = value.clamp(0.0, 1.0);
 
     return Column(
       children: [
         SizedBox(
-          width: 100, // Уменьшенный размер
-          height: 100, // Уменьшенный размер
+          width: 150,
+          height: 150,
           child: Stack(
             alignment: Alignment.center,
             children: [
               SizedBox(
-                width: 70, // Уменьшенный размер
-                height: 70, // Уменьшенный размер
+                width: 80,
+                height: 80,
                 child: CircularProgressIndicator(
                   value: clampedValue,
                   backgroundColor: color.withOpacity(0.2),
                   valueColor: AlwaysStoppedAnimation<Color>(color),
-                  strokeWidth: 10, // Немного тоньше
+                  strokeWidth: 12,
                 ),
               ),
               Container(
-                width: 60, // Уменьшенный размер
-                height: 60, // Уменьшенный размер
+                width: 90,
+                height: 90,
                 alignment: Alignment.center,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
                     centerText,
                     style: TextStyle(
-                      fontSize: 18, // Уменьшенный размер шрифта
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: color,
                     ),
@@ -917,7 +876,6 @@ class DashboardScreenState extends State<DashboardScreen> {
       },
     );
 
-    // If settings were updated, refresh the user data and daily data
     if (result == true) {
       setState(() {
         _userFuture = _userRepository.getUser(widget.userId);
@@ -927,12 +885,12 @@ class DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _showAddWaterDialog(BuildContext context) async {
-    int amount = 50; // Default amount (ml) - reduced from 100ml
-    bool isSubmitting = false; // Flag to prevent multiple submissions
+    int amount = 50;
+    bool isSubmitting = false;
 
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // Prevent dismissing by tapping outside
+      barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
@@ -951,10 +909,8 @@ class DashboardScreenState extends State<DashboardScreen> {
                           icon: const Icon(Icons.remove),
                           onPressed: () {
                             if (amount > 25) {
-                              // Reduced minimum from 50ml to 25ml
                               setDialogState(() {
-                                amount -=
-                                    25; // Smaller decrements (25ml instead of 50ml)
+                                amount -= 25;
                               });
                             }
                           },
@@ -980,10 +936,8 @@ class DashboardScreenState extends State<DashboardScreen> {
                           icon: const Icon(Icons.add),
                           onPressed: () {
                             if (amount < 500) {
-                              // Limit maximum amount
                               setDialogState(() {
-                                amount +=
-                                    25; // Smaller increments (25ml instead of 50ml)
+                                amount += 25;
                               });
                             }
                           },
@@ -1087,52 +1041,32 @@ class DashboardScreenState extends State<DashboardScreen> {
                       isSubmitting
                           ? null
                           : () async {
-                            // Set flag to prevent multiple submissions
                             setDialogState(() {
                               isSubmitting = true;
                             });
 
                             try {
-                              print(
-                                'Starting water entry addition: $amount ml',
-                              );
-
-                              // Create a single water entry with exact amount
                               final waterEntry = WaterEntry(
                                 amount: amount,
                                 dateTime: DateTime.now(),
                                 userId: widget.userId,
                               );
 
-                              // Insert the entry into the database
-                              final entryId = await _dbHelper.insertWaterEntry(
-                                waterEntry,
-                              );
-                              print('Water entry added with ID: $entryId');
-
-                              // Get updated water amount directly from the database
                               final updatedWaterAmount = await _dbHelper
                                   .getTotalWaterForDate(
                                     widget.userId,
                                     _selectedDate,
                                   );
 
-                              print(
-                                'Updated water amount: $updatedWaterAmount ml',
-                              );
-
-                              // Update state with new water amount
                               if (mounted) {
                                 setState(() {
                                   _waterConsumed = updatedWaterAmount;
                                 });
                               }
 
-                              // Close the dialog
                               if (dialogContext.mounted) {
                                 Navigator.of(dialogContext).pop();
 
-                                // Show confirmation
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Added $amount ml of water'),
@@ -1141,9 +1075,6 @@ class DashboardScreenState extends State<DashboardScreen> {
                                 );
                               }
                             } catch (e) {
-                              print('Error adding water: $e');
-
-                              // Reset submission flag on error
                               if (dialogContext.mounted) {
                                 setDialogState(() {
                                   isSubmitting = false;
@@ -1164,31 +1095,6 @@ class DashboardScreenState extends State<DashboardScreen> {
           },
         );
       },
-    );
-  }
-
-  Widget _buildQuickAmountButton(
-    BuildContext context,
-    int amount,
-    VoidCallback onPressed,
-  ) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.blue.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          '$amount ml',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-          ),
-        ),
-      ),
     );
   }
 }

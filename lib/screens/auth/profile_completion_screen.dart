@@ -130,8 +130,6 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Complete Your Profile')),
-      // Explicitly set bottomNavigationBar to null to ensure it doesn't appear
-      bottomNavigationBar: null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(

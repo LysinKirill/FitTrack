@@ -141,23 +141,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
       appBar: AppBar(
         title: const Text('Activity Log'),
         actions: [
-          // Debug button to add test activity
-          IconButton(
-            icon: const Icon(Icons.bug_report),
-            onPressed: _addTestActivityEntry,
-          ),
-          // Debug button to clear all entries
-          IconButton(
-            icon: const Icon(Icons.delete_forever),
-            onPressed: () async {
-              final count = await _dbHelper.clearActivityEntries();
-              print('Cleared $count activity entries');
-              _loadActivityEntries();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Deleted $count activity entries')),
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.calendar_today),
             onPressed: () => _selectDate(context),
@@ -243,43 +226,42 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
             ),
           ),
           Expanded(
-            child:
-                _activityEntries.isEmpty
-                    ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.directions_run,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Нет записей активности за этот день',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.add),
-                            label: const Text('Добавить активность'),
-                            onPressed: _addActivityEntry,
-                          ),
-                        ],
-                      ),
-                    )
-                    : ListView.builder(
-                      itemCount: ActivityEntry.activityTypes.length,
-                      itemBuilder: (context, index) {
-                        final activityType = ActivityEntry.activityTypes[index];
-                        final entries = groupedEntries[activityType] ?? [];
+            child: _activityEntries.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.directions_run,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Нет записей активности за этот день',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.add),
+                    label: const Text('Добавить активность'),
+                    onPressed: _addActivityEntry,
+                  ),
+                ],
+              ),
+            )
+                : ListView.builder(
+              itemCount: ActivityEntry.activityTypes.length,
+              itemBuilder: (context, index) {
+                final activityType = ActivityEntry.activityTypes[index];
+                final entries = groupedEntries[activityType] ?? [];
 
-                        if (entries.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
+                if (entries.isEmpty) {
+                  return const SizedBox.shrink();
+                }
 
                         return ExpansionTile(
                           title: Row(
@@ -397,160 +379,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class AddActivityDialog extends StatefulWidget {
-  final String? initialActivityType;
-  final DateTime selectedDate;
-
-  const AddActivityDialog({
-    super.key,
-    this.initialActivityType,
-    required this.selectedDate,
-  });
-
-  @override
-  State<AddActivityDialog> createState() => _AddActivityDialogState();
-}
-
-class _AddActivityDialogState extends State<AddActivityDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _durationController = TextEditingController();
-  final _caloriesController = TextEditingController();
-  final _notesController = TextEditingController();
-
-  String _activityType = 'Running';
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initialActivityType != null) {
-      _activityType = widget.initialActivityType!;
-    }
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _durationController.dispose();
-    _caloriesController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Add Activity'),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                value: _activityType,
-                decoration: const InputDecoration(labelText: 'Activity Type'),
-                items:
-                    ActivityEntry.activityTypes.map((type) {
-                      return DropdownMenuItem(value: type, child: Text(type));
-                    }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _activityType = value!;
-                  });
-                },
-              ),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Activity Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter activity name';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _durationController,
-                decoration: const InputDecoration(
-                  labelText: 'Duration (minutes)',
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter duration';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Please enter a valid number';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _caloriesController,
-                decoration: const InputDecoration(labelText: 'Calories Burned'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter calories burned';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Please enter a valid number';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Notes (optional)',
-                ),
-                maxLines: 2,
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              // Use the selected date with current time
-              final now = DateTime.now();
-              final dateTime = DateTime(
-                widget.selectedDate.year,
-                widget.selectedDate.month,
-                widget.selectedDate.day,
-                now.hour,
-                now.minute,
-                now.second,
-              );
-
-              final activityEntry = ActivityEntry(
-                name: _nameController.text,
-                activityType: _activityType,
-                duration: int.parse(_durationController.text),
-                caloriesBurned: int.parse(_caloriesController.text),
-                dateTime: dateTime,
-                notes:
-                    _notesController.text.isEmpty
-                        ? null
-                        : _notesController.text,
-              );
-              Navigator.of(context).pop(activityEntry);
-            }
-          },
-          child: const Text('Add'),
-        ),
-      ],
     );
   }
 }

@@ -51,8 +51,6 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
       ),
-      // Explicitly set bottomNavigationBar to null to ensure it doesn't appear
-      bottomNavigationBar: null,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(

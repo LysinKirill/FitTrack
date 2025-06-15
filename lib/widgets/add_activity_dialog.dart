@@ -25,7 +25,7 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
   final _notesController = TextEditingController();
   final _weightController = TextEditingController();
 
-  String _activityType = 'Бег';
+  String _activityType = 'Running';
   int? _calculatedCalories;
   bool _isCalculating = false;
 

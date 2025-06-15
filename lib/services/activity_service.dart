@@ -13,15 +13,15 @@ class ActivityService {
     required double weight,
   }) async {
     final Map<String, String> activityTypeMapping = {
-      'Бег': 'running',
-      'Ходьба': 'walking',
-      'Велосипед': 'cycling',
-      'Плавание': 'swimming',
-      'Тренировка в зале': 'weight training',
-      'Йога': 'yoga',
-      'Пилатес': 'pilates',
-      'ВИИТ': 'high intensity interval training',
-      'Другое': 'general exercise',
+      'Running': 'running',
+      'Walking': 'walking',
+      'Cycling': 'cycling',
+      'Swimming': 'swimming',
+      'Gym Workout': 'weight training',
+      'Yoga': 'yoga',
+      'Pilates': 'pilates',
+      'HIIT': 'high intensity interval training',
+      'Other': 'general exercise',
     };
 
     try {
