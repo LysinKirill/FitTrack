@@ -38,7 +38,6 @@ class _MainAppState extends State<MainApp> {
         userId: widget.user.id!,
         onDataChanged: _onDataChanged,
         onCaloriesUpdated: (calories) {
-          print("Calories updated in food diary: $calories");
           _dashboardKey.currentState?.updateCaloriesConsumed(calories);
         },
       ),
@@ -52,30 +51,13 @@ class _MainAppState extends State<MainApp> {
   }
 
   Future<void> _syncFoodDiaryWithDashboard() async {
-    print("Syncing food diary data with dashboard");
     final dbHelper = DatabaseHelper.instance;
-
-    final db = await dbHelper.database;
-    final users = await db.query('users');
-    print('Found ${users.length} users in database');
-    for (var user in users) {
-      print('User: ${user['id']} - ${user['name']}');
-    }
-
-    final allEntries = await db.query('meal_entries');
-    print('Total entries in meal_entries table: ${allEntries.length}');
-    for (var entry in allEntries) {
-      print(
-        'Entry: ${entry['name']}, calories: ${entry['calories']}, user_id: ${entry['user_id']}',
-      );
-    }
 
     final calories = await dbHelper.getTotalCaloriesForDate(
       widget.user.id!,
       DateTime.now(),
     );
 
-    print("Initial calories from database: $calories");
     if (calories > 0) {
       _dashboardKey.currentState?.updateCaloriesConsumed(calories);
     }
@@ -98,7 +80,6 @@ class _MainAppState extends State<MainApp> {
                 userId: widget.user.id!,
                 onDataChanged: _onDataChanged,
                 onCaloriesUpdated: (calories) {
-                  print("Calories updated in food diary: $calories");
                   _dashboardKey.currentState?.updateCaloriesConsumed(calories);
                 },
               );
@@ -129,7 +110,6 @@ class _MainAppState extends State<MainApp> {
             }
 
             if (index == 0) {
-              print("Switching to dashboard tab, refreshing data");
               Future.delayed(Duration(milliseconds: 100), () async {
                 final dbHelper = DatabaseHelper.instance;
                 final calories = await dbHelper.getTotalCaloriesForDate(
@@ -139,7 +119,6 @@ class _MainAppState extends State<MainApp> {
                   DateTime.now(),
                 );
 
-                print("Current calories from database: $calories");
                 if (calories > 0) {
                   _dashboardKey.currentState?.updateCaloriesConsumed(calories);
                 }

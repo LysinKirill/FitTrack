@@ -80,9 +80,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
         startDate,
         endDate,
       );
-      print('Loaded ${_weightEntries.length} weight entries');
     } catch (e) {
-      print('Error loading weight entries: $e');
       _weightEntries = [];
     }
   }
@@ -97,9 +95,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
         startDate,
         endDate,
       );
-      print('Loaded ${_bodyMeasurements.length} body measurements');
     } catch (e) {
-      print('Error loading body measurements: $e');
       _bodyMeasurements = [];
     }
   }

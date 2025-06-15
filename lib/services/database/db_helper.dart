@@ -23,19 +23,14 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    print('Initializing database at path: $path');
-
     return await openDatabase(
       path,
       version: 7,
       onCreate: (db, version) {
-        print('Creating new database tables');
         return _createDB(db, version);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-        print('Upgrading database from v$oldVersion to v$newVersion');
         if (oldVersion < 2) {
-          print('Adding meal_entries table');
           await db.execute('''
             CREATE TABLE IF NOT EXISTS meal_entries (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,7 +48,6 @@ class DatabaseHelper {
         }
 
         if (oldVersion < 3) {
-          print('Adding activity_entries table');
           await db.execute('''
             CREATE TABLE IF NOT EXISTS activity_entries (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,7 +64,6 @@ class DatabaseHelper {
         }
 
         if (oldVersion < 4) {
-          print('Adding weight_entries table');
           await db.execute('''
             CREATE TABLE IF NOT EXISTS weight_entries (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,7 +77,6 @@ class DatabaseHelper {
         }
 
         if (oldVersion < 5) {
-          print('Adding water_entries table');
           await db.execute('''
             CREATE TABLE IF NOT EXISTS water_entries (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,9 +89,6 @@ class DatabaseHelper {
         }
 
         if (oldVersion < 6) {
-          print(
-            'Adding fitness_goal and activity_level columns to users table',
-          );
           await db.execute(
             'ALTER TABLE users ADD COLUMN fitness_goal TEXT DEFAULT "maintenance"',
           );
@@ -109,7 +98,6 @@ class DatabaseHelper {
         }
 
         if (oldVersion < 7) {
-          print('Adding body_measurements table');
           await db.execute('''
             CREATE TABLE IF NOT EXISTS body_measurements (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -126,13 +114,6 @@ class DatabaseHelper {
             )
           ''');
         }
-      },
-      onOpen: (db) async {
-        print('Database opened');
-        final tables = await db.rawQuery(
-          "SELECT name FROM sqlite_master WHERE type='table'",
-        );
-        print('Tables in database: ${tables.map((t) => t['name']).join(', ')}');
       },
     );
   }
@@ -228,14 +209,10 @@ class DatabaseHelper {
     final map = mealEntry.toMap();
     map['user_id'] = userId;
 
-    print('Inserting meal entry: $map');
-
     try {
       final id = await db.insert('meal_entries', map);
-      print('Successfully inserted meal entry with ID: $id');
       return id;
     } catch (e) {
-      print('Error inserting meal entry: $e');
       return -1;
     }
   }
@@ -252,39 +229,13 @@ class DatabaseHelper {
     final startDateStr = dateFormat.format(startDate);
     final endDateStr = dateFormat.format(endDate);
 
-    print(
-      'Querying meals for userId: $userId, date range: $startDateStr to $endDateStr',
-    );
-
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='meal_entries'",
     );
-    print('Tables found: ${tables.length}');
 
     if (tables.isEmpty) {
-      print('meal_entries table does not exist!');
       return [];
     }
-
-    final allEntries = await db.query('meal_entries');
-    print('Total entries in meal_entries table: ${allEntries.length}');
-
-    if (allEntries.isNotEmpty) {
-      print('Sample entry: ${allEntries.first}');
-
-      for (var entry in allEntries) {
-        print(
-          'Entry: ${entry['name']}, calories: ${entry['calories']}, date: ${entry['date_time']}, user_id: ${entry['user_id']}',
-        );
-      }
-    }
-
-    final userEntries = await db.query(
-      'meal_entries',
-      where: 'user_id = ?',
-      whereArgs: [userId],
-    );
-    print('Entries for user $userId: ${userEntries.length}');
 
     final result = await db.query(
       'meal_entries',
@@ -292,14 +243,6 @@ class DatabaseHelper {
       whereArgs: [userId, startDateStr, endDateStr],
       orderBy: 'date_time ASC',
     );
-
-    print('Query result count for date range: ${result.length}');
-
-    for (var entry in result) {
-      print(
-        'Filtered entry: ${entry['name']}, calories: ${entry['calories']}, date: ${entry['date_time']}',
-      );
-    }
 
     return result.map((map) => MealEntry.fromMap(map)).toList();
   }
@@ -321,7 +264,6 @@ class DatabaseHelper {
 
   Future<int> clearMealEntries() async {
     final db = await instance.database;
-    print('Clearing all meal entries');
     return await db.delete('meal_entries');
   }
 
@@ -338,14 +280,10 @@ class DatabaseHelper {
     final map = activityEntry.toMap();
     map['user_id'] = userId;
 
-    print('Inserting activity entry: $map');
-
     try {
       final id = await db.insert('activity_entries', map);
-      print('Successfully inserted activity entry with ID: $id');
       return id;
     } catch (e) {
-      print('Error inserting activity entry: $e');
       return -1;
     }
   }
@@ -362,17 +300,11 @@ class DatabaseHelper {
     final startDateStr = dateFormat.format(startDate);
     final endDateStr = dateFormat.format(endDate);
 
-    print(
-      'Querying activities for userId: $userId, date range: $startDateStr to $endDateStr',
-    );
-
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='activity_entries'",
     );
-    print('Tables found: ${tables.length}');
 
     if (tables.isEmpty) {
-      print('activity_entries table does not exist!');
       return [];
     }
 
@@ -382,8 +314,6 @@ class DatabaseHelper {
       whereArgs: [userId, startDateStr, endDateStr],
       orderBy: 'date_time ASC',
     );
-
-    print('Query result count: ${result.length}');
 
     return result.map((map) => ActivityEntry.fromMap(map)).toList();
   }
@@ -409,7 +339,6 @@ class DatabaseHelper {
 
   Future<int> clearActivityEntries() async {
     final db = await instance.database;
-    print('Clearing all activity entries');
     return await db.delete('activity_entries');
   }
 
@@ -417,14 +346,10 @@ class DatabaseHelper {
     final db = await instance.database;
     final map = weightEntry.toMap();
 
-    print('Inserting weight entry: $map');
-
     try {
       final id = await db.insert('weight_entries', map);
-      print('Successfully inserted weight entry with ID: $id');
       return id;
     } catch (e) {
-      print('Error inserting weight entry: $e');
       return -1;
     }
   }
@@ -437,7 +362,6 @@ class DatabaseHelper {
     );
 
     if (tables.isEmpty) {
-      print('weight_entries table does not exist!');
       return [];
     }
 
@@ -447,8 +371,6 @@ class DatabaseHelper {
       whereArgs: [userId],
       orderBy: 'date ASC',
     );
-
-    print('Query result count: ${result.length}');
 
     return result.map((map) => WeightEntry.fromMap(map)).toList();
   }
@@ -463,17 +385,11 @@ class DatabaseHelper {
 
     final startDateStr = dateFormat.format(startDate);
     final endDateStr = dateFormat.format(endDate);
-
-    print(
-      'Querying weight entries for userId: $userId, date range: $startDateStr to $endDateStr',
-    );
-
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='weight_entries'",
     );
 
     if (tables.isEmpty) {
-      print('weight_entries table does not exist!');
       return [];
     }
 
@@ -483,8 +399,6 @@ class DatabaseHelper {
       whereArgs: [userId, startDateStr, endDateStr],
       orderBy: 'date ASC',
     );
-
-    print('Query result count: ${result.length}');
 
     return result.map((map) => WeightEntry.fromMap(map)).toList();
   }
@@ -506,7 +420,6 @@ class DatabaseHelper {
 
   Future<int> clearWeightEntries() async {
     final db = await instance.database;
-    print('Clearing all weight entries');
     return await db.delete('weight_entries');
   }
 
@@ -514,14 +427,10 @@ class DatabaseHelper {
     final db = await instance.database;
     final map = waterEntry.toMap();
 
-    print('Inserting water entry: $map');
-
     try {
       final id = await db.insert('water_entries', map);
-      print('Successfully inserted water entry with ID: $id');
       return id;
     } catch (e) {
-      print('Error inserting water entry: $e');
       return -1;
     }
   }
@@ -538,16 +447,11 @@ class DatabaseHelper {
     final startDateStr = dateFormat.format(startDate);
     final endDateStr = dateFormat.format(endDate);
 
-    print(
-      'Querying water entries for userId: $userId, date range: $startDateStr to $endDateStr',
-    );
-
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='water_entries'",
     );
 
     if (tables.isEmpty) {
-      print('water_entries table does not exist!');
       return [];
     }
 
@@ -557,8 +461,6 @@ class DatabaseHelper {
       whereArgs: [userId, startDateStr, endDateStr],
       orderBy: 'date_time ASC',
     );
-
-    print('Query result count: ${result.length}');
 
     return result.map((map) => WaterEntry.fromMap(map)).toList();
   }
@@ -589,7 +491,6 @@ class DatabaseHelper {
 
   Future<int> clearWaterEntries() async {
     final db = await instance.database;
-    print('Clearing all water entries');
     return await db.delete('water_entries');
   }
 
@@ -598,9 +499,7 @@ class DatabaseHelper {
     int total = 0;
     for (var entry in entries) {
       total += entry.calories;
-      print('Adding ${entry.calories} calories from ${entry.name}');
     }
-    print('Total calories for date ${date.toString()}: $total');
     return total;
   }
 
@@ -608,14 +507,10 @@ class DatabaseHelper {
     final db = await instance.database;
     final map = measurement.toMap();
 
-    print('Inserting body measurement: $map');
-
     try {
       final id = await db.insert('body_measurements', map);
-      print('Successfully inserted body measurement with ID: $id');
       return id;
     } catch (e) {
-      print('Error inserting body measurement: $e');
       return -1;
     }
   }
@@ -628,7 +523,6 @@ class DatabaseHelper {
     );
 
     if (tables.isEmpty) {
-      print('body_measurements table does not exist!');
       return [];
     }
 
@@ -638,8 +532,6 @@ class DatabaseHelper {
       whereArgs: [userId],
       orderBy: 'date ASC',
     );
-
-    print('Query result count: ${result.length}');
 
     return result.map((map) => BodyMeasurement.fromMap(map)).toList();
   }
@@ -655,16 +547,11 @@ class DatabaseHelper {
     final startDateStr = dateFormat.format(startDate);
     final endDateStr = dateFormat.format(endDate);
 
-    print(
-      'Querying body measurements for userId: $userId, date range: $startDateStr to $endDateStr',
-    );
-
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='body_measurements'",
     );
 
     if (tables.isEmpty) {
-      print('body_measurements table does not exist!');
       return [];
     }
 
@@ -674,8 +561,6 @@ class DatabaseHelper {
       whereArgs: [userId, startDateStr, endDateStr],
       orderBy: 'date ASC',
     );
-
-    print('Query result count: ${result.length}');
 
     return result.map((map) => BodyMeasurement.fromMap(map)).toList();
   }
@@ -701,7 +586,6 @@ class DatabaseHelper {
 
   Future<int> clearBodyMeasurements() async {
     final db = await instance.database;
-    print('Clearing all body measurements');
     return await db.delete('body_measurements');
   }
 }
