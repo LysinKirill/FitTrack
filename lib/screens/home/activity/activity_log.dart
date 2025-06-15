@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fit_track/models/activity_entry.dart';
 import 'package:fit_track/services/database/db_helper.dart';
+import 'package:fit_track/widgets/add_activity_dialog.dart';
 
 class ActivityLogScreen extends StatefulWidget {
   final int userId;
@@ -17,8 +18,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
   DateTime _selectedDate = DateTime.now();
   List<ActivityEntry> _activityEntries = [];
   late int _userId;
-
-  // Activity summary
   int _totalCaloriesBurned = 0;
   int _totalDuration = 0;
 
@@ -30,12 +29,10 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
   }
 
   Future<void> _loadActivityEntries() async {
-    print('Loading activities for date: ${_selectedDate.toString()}');
     final entries = await _dbHelper.getActivityEntriesByDate(
       _userId,
       _selectedDate,
     );
-    print('Loaded ${entries.length} activities from database');
 
     setState(() {
       _activityEntries = entries;
@@ -75,9 +72,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     );
 
     if (result != null) {
-      print('Adding activity: ${result.name}, type: ${result.activityType}');
-      final id = await _dbHelper.insertActivityEntry(result, _userId);
-      print('Activity added with ID: $id');
+      await _dbHelper.insertActivityEntry(result, _userId);
       await _loadActivityEntries();
     }
   }
@@ -134,7 +129,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Group activity entries by activity type
     Map<String, List<ActivityEntry>> groupedEntries = {};
     for (var type in ActivityEntry.activityTypes) {
       groupedEntries[type] =
@@ -172,7 +166,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
       ),
       body: Column(
         children: [
-          // Date display
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -210,8 +203,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
               ],
             ),
           ),
-
-          // Activity summary card
           Card(
             margin: const EdgeInsets.all(16.0),
             child: Padding(
@@ -251,8 +242,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
               ),
             ),
           ),
-
-          // Activity entries list
           Expanded(
             child:
                 _activityEntries.isEmpty
@@ -267,7 +256,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No activity entries for this day',
+                            'Нет записей активности за этот день',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
@@ -276,7 +265,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                           const SizedBox(height: 24),
                           ElevatedButton.icon(
                             icon: const Icon(Icons.add),
-                            label: const Text('Add Activity'),
+                            label: const Text('Добавить активность'),
                             onPressed: _addActivityEntry,
                           ),
                         ],

@@ -3,8 +3,8 @@ import 'package:intl/intl.dart';
 class ActivityEntry {
   final int? id;
   final String name;
-  final String activityType; // Running, Walking, Cycling, Swimming, etc.
-  final int duration; // in minutes
+  final String activityType;
+  final int duration;
   final int caloriesBurned;
   final DateTime dateTime;
   final String? notes;
