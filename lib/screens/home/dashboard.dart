@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/user.dart';
-import '../../models/water_entry.dart';
 import '../../services/database/db_helper.dart';
 import '../../services/database/user_repository.dart';
 import '../../widgets/setting_bottom_sheet.dart';
@@ -174,7 +173,6 @@ class DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Date display
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Row(
@@ -213,7 +211,6 @@ class DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
 
-                    // Welcome message and summary
                     Card(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -268,9 +265,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                                 ),
                                 const SizedBox(width: 0),
                                 _buildCircularProgress(
-                                  value:
-                                      _activityMinutes /
-                                      60, // Assuming 60 minutes is the goal
+                                  value: _activityMinutes / 60,
                                   label: 'Activity',
                                   color: Colors.green,
                                   centerText: '${_activityMinutes}m',
@@ -538,7 +533,6 @@ class DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
 
-                    // Activity and Nutrition Summary
                     Padding(
                       padding: const EdgeInsets.only(
                         left: 16.0,
@@ -555,7 +549,6 @@ class DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
 
-                    // Activity summary
                     Card(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -602,7 +595,6 @@ class DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
 
-                    // Nutrition summary
                     Card(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -664,7 +656,6 @@ class DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
 
-                    // Quick actions
                     Padding(
                       padding: const EdgeInsets.only(
                         left: 16.0,
@@ -1046,12 +1037,6 @@ class DashboardScreenState extends State<DashboardScreen> {
                             });
 
                             try {
-                              final waterEntry = WaterEntry(
-                                amount: amount,
-                                dateTime: DateTime.now(),
-                                userId: widget.userId,
-                              );
-
                               final updatedWaterAmount = await _dbHelper
                                   .getTotalWaterForDate(
                                     widget.userId,

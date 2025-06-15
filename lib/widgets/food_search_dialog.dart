@@ -136,7 +136,6 @@ class _FoodSearchDialogState extends State<FoodSearchDialog> {
                   ),
                 )
                 : ConstrainedBox(
-                  // Add ConstrainedBox
                   constraints: BoxConstraints(
                     maxHeight: MediaQuery.of(context).size.height * 0.4,
                   ),
@@ -150,7 +149,6 @@ class _FoodSearchDialogState extends State<FoodSearchDialog> {
                             '${food.calories} cal | P:${food.proteins}g F:${food.fats}g C:${food.carbs}g',
                           ),
                           onTap: () {
-                            // Create a DateTime that combines the selected date with the current time
                             final now = DateTime.now();
                             final dateTime = DateTime(
                               widget.selectedDate.year,

@@ -53,7 +53,6 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
           ),
           const SizedBox(height: 16),
 
-          // User info section
           Text(
             'User Information',
             style: TextStyle(
@@ -75,7 +74,6 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Daily goals section
           Text(
             'Daily Goals',
             style: TextStyle(
@@ -129,7 +127,6 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
           const Divider(),
           const SizedBox(height: 16),
 
-          // Logout button
           ElevatedButton.icon(
             onPressed: _logout,
             icon: const Icon(Icons.logout),
@@ -145,7 +142,6 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
   }
 
   Future<void> _saveGoals() async {
-    // Validate inputs
     final calorieGoal = int.tryParse(_calorieController.text);
     final waterGoal = int.tryParse(_waterController.text);
     final weight =
@@ -179,7 +175,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
         Navigator.pop(
           context,
           true,
-        ); // Return true to indicate successful update
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -196,15 +192,12 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
     }
   }
 
-  // Method to handle user logout
   Future<void> _logout() async {
     try {
-      // If authService is provided, call its logout method
       if (widget.authService != null) {
         await widget.authService!.logout();
       }
 
-      // Navigate to login screen and clear navigation stack
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
@@ -213,7 +206,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
                   authService: AuthService(DatabaseHelper.instance),
                 ),
           ),
-          (route) => false, // Remove all previous routes
+          (route) => false,
         );
       }
     } catch (e) {

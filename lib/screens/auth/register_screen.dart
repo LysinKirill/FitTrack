@@ -53,7 +53,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      // Create user with all parameters
       final user = User(
         name: _nameController.text,
         email: _emailController.text,
@@ -73,15 +72,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         activityLevel: _selectedActivityLevel,
       );
 
-      // Calculate daily calorie goal if all required parameters are present
-      int calorieGoal = 2000; // Default value
+      int calorieGoal = 2000;
       if (user.height != null &&
           user.weight != null &&
           user.birthDate != null) {
         calorieGoal = CalorieCalculator.calculateDailyCalorieNeeds(user);
       }
 
-      // Create final user with calculated calorie goal
       final userToRegister = User(
         name: user.name,
         email: user.email,
@@ -156,7 +153,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header
                   const Text(
                     'Your journey to health starts here',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -164,7 +160,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Account Information Section
                   _buildSectionHeader('Account Information'),
                   Card(
                     elevation: 2,
@@ -243,7 +238,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
 
-                  // Physical Information Section
                   _buildSectionHeader('Physical Parameters'),
                   Card(
                     elevation: 2,
@@ -301,7 +295,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
 
-                  // Fitness Goals Section
                   _buildSectionHeader('Fitness Goals'),
                   Card(
                     elevation: 2,
@@ -335,7 +328,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
 
-                  // Register Button
                   const SizedBox(height: 24),
                   _isLoading
                       ? const Center(child: CircularProgressIndicator())

@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 class MealEntry {
   final int? id;
   final String name;
-  final String mealType; // Breakfast, Lunch, Dinner, Snack
+  final String mealType;
   final int calories;
   final double proteins;
   final double fats;

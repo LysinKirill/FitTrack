@@ -82,40 +82,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     _loadActivityEntries();
   }
 
-  // Debug method to add a test activity entry
-  Future<void> _addTestActivityEntry() async {
-    // Use the selected date with current time
-    final now = DateTime.now();
-    final dateTime = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      now.hour,
-      now.minute,
-      now.second,
-    );
-
-    final testActivity = ActivityEntry(
-      name: 'Test Activity',
-      activityType: 'Running',
-      duration: 30,
-      caloriesBurned: 250,
-      dateTime: dateTime,
-      notes: 'This is a test activity',
-    );
-
-    print(
-      'Adding test activity: ${testActivity.name}, type: ${testActivity.activityType}',
-    );
-    final id = await _dbHelper.insertActivityEntry(testActivity, _userId);
-    print('Test activity added with ID: $id');
-    await _loadActivityEntries();
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Test activity added')));
-  }
-
   String _formatDuration(int minutes) {
     final hours = minutes ~/ 60;
     final remainingMinutes = minutes % 60;

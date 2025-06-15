@@ -27,7 +27,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 7, // Increase version to trigger onCreate/onUpgrade
+      version: 7,
       onCreate: (db, version) {
         print('Creating new database tables');
         return _createDB(db, version);
@@ -35,7 +35,6 @@ class DatabaseHelper {
       onUpgrade: (db, oldVersion, newVersion) async {
         print('Upgrading database from v$oldVersion to v$newVersion');
         if (oldVersion < 2) {
-          // Add meal_entries table if upgrading from version 1
           print('Adding meal_entries table');
           await db.execute('''
             CREATE TABLE IF NOT EXISTS meal_entries (
@@ -54,7 +53,6 @@ class DatabaseHelper {
         }
 
         if (oldVersion < 3) {
-          // Add activity_entries table if upgrading from version 2
           print('Adding activity_entries table');
           await db.execute('''
             CREATE TABLE IF NOT EXISTS activity_entries (
@@ -72,7 +70,6 @@ class DatabaseHelper {
         }
 
         if (oldVersion < 4) {
-          // Add weight_entries table if upgrading from version 3
           print('Adding weight_entries table');
           await db.execute('''
             CREATE TABLE IF NOT EXISTS weight_entries (
@@ -87,7 +84,6 @@ class DatabaseHelper {
         }
 
         if (oldVersion < 5) {
-          // Add water_entries table if upgrading from version 4
           print('Adding water_entries table');
           await db.execute('''
             CREATE TABLE IF NOT EXISTS water_entries (
@@ -101,7 +97,6 @@ class DatabaseHelper {
         }
 
         if (oldVersion < 6) {
-          // Add fitness_goal and activity_level columns to users table
           print(
             'Adding fitness_goal and activity_level columns to users table',
           );
@@ -114,7 +109,6 @@ class DatabaseHelper {
         }
 
         if (oldVersion < 7) {
-          // Add body_measurements table
           print('Adding body_measurements table');
           await db.execute('''
             CREATE TABLE IF NOT EXISTS body_measurements (
@@ -135,7 +129,6 @@ class DatabaseHelper {
       },
       onOpen: (db) async {
         print('Database opened');
-        // Check if tables exist
         final tables = await db.rawQuery(
           "SELECT name FROM sqlite_master WHERE type='table'",
         );
@@ -230,7 +223,6 @@ class DatabaseHelper {
     ''');
   }
 
-  // Meal Entries CRUD operations
   Future<int> insertMealEntry(MealEntry mealEntry, int userId) async {
     final db = await instance.database;
     final map = mealEntry.toMap();
@@ -264,7 +256,6 @@ class DatabaseHelper {
       'Querying meals for userId: $userId, date range: $startDateStr to $endDateStr',
     );
 
-    // First check if the table exists
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='meal_entries'",
     );
@@ -275,14 +266,12 @@ class DatabaseHelper {
       return [];
     }
 
-    // Check all entries in the table without filtering
     final allEntries = await db.query('meal_entries');
     print('Total entries in meal_entries table: ${allEntries.length}');
 
     if (allEntries.isNotEmpty) {
       print('Sample entry: ${allEntries.first}');
 
-      // Debug: Print all entries
       for (var entry in allEntries) {
         print(
           'Entry: ${entry['name']}, calories: ${entry['calories']}, date: ${entry['date_time']}, user_id: ${entry['user_id']}',
@@ -290,7 +279,6 @@ class DatabaseHelper {
       }
     }
 
-    // Try a simpler query first to debug
     final userEntries = await db.query(
       'meal_entries',
       where: 'user_id = ?',
@@ -298,7 +286,6 @@ class DatabaseHelper {
     );
     print('Entries for user $userId: ${userEntries.length}');
 
-    // Now try the date-filtered query
     final result = await db.query(
       'meal_entries',
       where: 'user_id = ? AND date_time BETWEEN ? AND ?',
@@ -308,7 +295,6 @@ class DatabaseHelper {
 
     print('Query result count for date range: ${result.length}');
 
-    // Debug: Print all filtered entries
     for (var entry in result) {
       print(
         'Filtered entry: ${entry['name']}, calories: ${entry['calories']}, date: ${entry['date_time']}',
@@ -333,7 +319,6 @@ class DatabaseHelper {
     return await db.delete('meal_entries', where: 'id = ?', whereArgs: [id]);
   }
 
-  // For testing: clear all meal entries
   Future<int> clearMealEntries() async {
     final db = await instance.database;
     print('Clearing all meal entries');
@@ -345,7 +330,6 @@ class DatabaseHelper {
     db.close();
   }
 
-  // Activity Entries CRUD operations
   Future<int> insertActivityEntry(
     ActivityEntry activityEntry,
     int userId,
@@ -382,7 +366,6 @@ class DatabaseHelper {
       'Querying activities for userId: $userId, date range: $startDateStr to $endDateStr',
     );
 
-    // First check if the table exists
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='activity_entries'",
     );
@@ -424,14 +407,12 @@ class DatabaseHelper {
     );
   }
 
-  // For testing: clear all activity entries
   Future<int> clearActivityEntries() async {
     final db = await instance.database;
     print('Clearing all activity entries');
     return await db.delete('activity_entries');
   }
 
-  // Weight Entries CRUD operations
   Future<int> insertWeightEntry(WeightEntry weightEntry) async {
     final db = await instance.database;
     final map = weightEntry.toMap();
@@ -451,7 +432,6 @@ class DatabaseHelper {
   Future<List<WeightEntry>> getWeightEntriesByUserId(int userId) async {
     final db = await instance.database;
 
-    // First check if the table exists
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='weight_entries'",
     );
@@ -488,7 +468,6 @@ class DatabaseHelper {
       'Querying weight entries for userId: $userId, date range: $startDateStr to $endDateStr',
     );
 
-    // First check if the table exists
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='weight_entries'",
     );
@@ -525,14 +504,12 @@ class DatabaseHelper {
     return await db.delete('weight_entries', where: 'id = ?', whereArgs: [id]);
   }
 
-  // For testing: clear all weight entries
   Future<int> clearWeightEntries() async {
     final db = await instance.database;
     print('Clearing all weight entries');
     return await db.delete('weight_entries');
   }
 
-  // Water Entries CRUD operations
   Future<int> insertWaterEntry(WaterEntry waterEntry) async {
     final db = await instance.database;
     final map = waterEntry.toMap();
@@ -565,7 +542,6 @@ class DatabaseHelper {
       'Querying water entries for userId: $userId, date range: $startDateStr to $endDateStr',
     );
 
-    // First check if the table exists
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='water_entries'",
     );
@@ -611,14 +587,12 @@ class DatabaseHelper {
     return await db.delete('water_entries', where: 'id = ?', whereArgs: [id]);
   }
 
-  // For testing: clear all water entries
   Future<int> clearWaterEntries() async {
     final db = await instance.database;
     print('Clearing all water entries');
     return await db.delete('water_entries');
   }
 
-  // Get total calories for a date
   Future<int> getTotalCaloriesForDate(int userId, DateTime date) async {
     final entries = await getMealEntriesByDate(userId, date);
     int total = 0;
@@ -630,7 +604,6 @@ class DatabaseHelper {
     return total;
   }
 
-  // Body Measurements CRUD operations
   Future<int> insertBodyMeasurement(BodyMeasurement measurement) async {
     final db = await instance.database;
     final map = measurement.toMap();
@@ -650,7 +623,6 @@ class DatabaseHelper {
   Future<List<BodyMeasurement>> getBodyMeasurementsByUserId(int userId) async {
     final db = await instance.database;
 
-    // First check if the table exists
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='body_measurements'",
     );
@@ -687,7 +659,6 @@ class DatabaseHelper {
       'Querying body measurements for userId: $userId, date range: $startDateStr to $endDateStr',
     );
 
-    // First check if the table exists
     final tables = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='body_measurements'",
     );
@@ -728,7 +699,6 @@ class DatabaseHelper {
     );
   }
 
-  // For testing: clear all body measurements
   Future<int> clearBodyMeasurements() async {
     final db = await instance.database;
     print('Clearing all body measurements');

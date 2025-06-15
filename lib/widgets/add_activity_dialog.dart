@@ -102,7 +102,7 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
                 onChanged: (value) {
                   setState(() {
                     _activityType = value!;
-                    _calculatedCalories = null; // Reset when activity changes
+                    _calculatedCalories = null;
                   });
                 },
               ),
@@ -178,7 +178,7 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
               );
 
               final activityEntry = ActivityEntry(
-                name: _activityType, // Using the dropdown value as name
+                name: _activityType,
                 activityType: _activityType,
                 duration: int.parse(_durationController.text),
                 caloriesBurned: _calculatedCalories!,

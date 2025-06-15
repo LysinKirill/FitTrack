@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
-import 'package:fit_track/models/activity_entry.dart';
 import 'package:fit_track/models/body_measurement.dart';
-import 'package:fit_track/models/meal_entry.dart';
 import 'package:fit_track/models/user.dart';
 import 'package:fit_track/models/weight_entry.dart';
 import 'package:fit_track/services/database/db_helper.dart';
@@ -25,18 +23,12 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
 
   late Future<User> _userFuture;
 
-  // Time range selection
   String _selectedTimeRange = 'Week';
   final List<String> _timeRanges = ['Week', 'Month', '3 Months', 'Year'];
 
-  // Data for charts
   List<WeightEntry> _weightEntries = [];
   List<BodyMeasurement> _bodyMeasurements = [];
 
-  // Hover state for chart points
-  int? _hoveredPointIndex;
-
-  // Selected body measurement type for chart
   String _selectedMeasurementType = 'Waist';
   final List<String> _measurementTypes = [
     'Chest',
@@ -58,7 +50,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
     final DateTime now = DateTime.now();
     DateTime startDate;
 
-    // Determine start date based on selected time range
     switch (_selectedTimeRange) {
       case 'Week':
         startDate = now.subtract(const Duration(days: 7));
@@ -76,7 +67,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
         startDate = now.subtract(const Duration(days: 7));
     }
 
-    // Load data for the selected time range
     await _loadWeightEntries(startDate, now);
     await _loadBodyMeasurements(startDate, now);
 
@@ -114,7 +104,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
     }
   }
 
-  // Helper method to build section titles
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -129,7 +118,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
     );
   }
 
-  // Helper method to build empty data cards
   Widget _buildEmptyDataCard(String message) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -152,36 +140,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
     );
   }
 
-  // Helper method to build summary items
-  Widget _buildSummaryItem(
-    IconData icon,
-    String value,
-    String label,
-    Color color,
-  ) {
-    return Column(
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 30),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-      ],
-    );
-  }
-
-  // Helper method to build BMI indicator
   Widget _buildBMIIndicator(User user) {
     if (user.height == null || user.weight == null || user.height == 0) {
       return const Center(
@@ -195,11 +153,9 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       );
     }
 
-    // Calculate BMI: weight (kg) / (height (m))^2
-    final heightInMeters = user.height! / 100; // Convert cm to m
+    final heightInMeters = user.height! / 100;
     final bmi = user.weight! / (heightInMeters * heightInMeters);
 
-    // Determine BMI category and color
     String category;
     Color color;
 
@@ -245,7 +201,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
           ),
           child: Stack(
             children: [
-              // BMI marker
               Positioned(
                 left: (bmi / 40 * MediaQuery.of(context).size.width * 0.8)
                     .clamp(0, MediaQuery.of(context).size.width * 0.8 - 16),
@@ -282,7 +237,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       appBar: AppBar(
         title: const Text('Progress'),
         actions: [
-          // Time range selector
           PopupMenuButton<String>(
             icon: const Icon(Icons.calendar_today),
             onSelected: (String value) {
@@ -325,7 +279,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
         children: [
           _buildSectionTitle('Weight and Measurements Tracking'),
 
-          // Current weight card
           Card(
             margin: const EdgeInsets.symmetric(vertical: 16.0),
             child: Padding(
@@ -371,7 +324,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
             ),
           ),
 
-          // Weight history chart
           Card(
             margin: const EdgeInsets.symmetric(vertical: 8.0),
             child: Padding(
@@ -390,7 +342,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
             ),
           ),
 
-          // BMI card
           Card(
             margin: const EdgeInsets.symmetric(vertical: 8.0),
             child: Padding(
@@ -409,11 +360,9 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
             ),
           ),
 
-          // Body measurements section
           const SizedBox(height: 24),
           _buildSectionTitle('Body Measurements'),
 
-          // Current measurements card
           Card(
             margin: const EdgeInsets.symmetric(vertical: 16.0),
             child: Padding(
@@ -442,7 +391,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
             ),
           ),
 
-          // Measurements history chart
           Card(
             margin: const EdgeInsets.symmetric(vertical: 8.0),
             child: Padding(
@@ -460,7 +408,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      // Dropdown for selecting measurement type
                       DropdownButton<String>(
                         value: _selectedMeasurementType,
                         onChanged: (String? newValue) {
@@ -498,18 +445,15 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       return _buildEmptyDataCard('No weight entries for this period');
     }
 
-    // Sort entries by date
     final sortedEntries = List<WeightEntry>.from(_weightEntries)
       ..sort((a, b) => a.date.compareTo(b.date));
 
-    // Find min and max weight for chart scaling
     double minWeight;
     double maxWeight;
 
     if (sortedEntries.length == 1) {
-      // If there's only one entry, set min and max to create a range around it
-      minWeight = sortedEntries[0].weight * 0.95; // 5% below
-      maxWeight = sortedEntries[0].weight * 1.05; // 5% above
+      minWeight = sortedEntries[0].weight * 0.95;
+      maxWeight = sortedEntries[0].weight * 1.05;
     } else {
       minWeight = sortedEntries
           .map((e) => e.weight)
@@ -519,7 +463,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
           .reduce((a, b) => a > b ? a : b);
     }
 
-    // Add some padding to min and max for better visualization
     final chartMinWeight = (minWeight - 1.0).clamp(0.0, double.infinity);
     final chartMaxWeight = maxWeight + 1.0;
 
@@ -559,7 +502,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
     );
   }
 
-  // Removed hover-related methods as we're now always showing weight values
 
   void _showAddWeightDialog(BuildContext context, User user) {
     final weightController = TextEditingController(
@@ -601,7 +543,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  // Validate input
                   final weightText = weightController.text.trim();
                   if (weightText.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -620,7 +561,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                     return;
                   }
 
-                  // Create weight entry
                   final weightEntry = WeightEntry(
                     weight: weight,
                     date: DateTime.now(),
@@ -631,10 +571,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                     userId: widget.userId,
                   );
 
-                  // Save to database
                   final id = await _dbHelper.insertWeightEntry(weightEntry);
                   if (id > 0) {
-                    // Update user's current weight
                     final updatedUser = User(
                       id: user.id,
                       name: user.name,
@@ -650,7 +588,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                     );
                     await _userRepository.updateUser(updatedUser);
 
-                    // Reload data
                     setState(() {
                       _userFuture = _userRepository.getUser(widget.userId);
                     });
@@ -677,9 +614,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
     );
   }
 
-  // Helper method to build current measurements display
   Widget _buildCurrentMeasurements() {
-    // Get the most recent measurement if available
     final latestMeasurement =
         _bodyMeasurements.isNotEmpty
             ? _bodyMeasurements.reduce((a, b) => a.date.isAfter(b.date) ? a : b)
@@ -742,7 +677,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
     );
   }
 
-  // Helper method to build individual measurement item
   Widget _buildMeasurementItem(
     String label,
     double? value,
@@ -774,13 +708,11 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
     );
   }
 
-  // Helper method to build measurements history chart
   Widget _buildMeasurementsHistoryChart() {
     if (_bodyMeasurements.isEmpty) {
       return _buildEmptyDataCard('No measurement entries for this period');
     }
 
-    // Filter measurements that have the selected measurement type
     final filteredMeasurements =
         _bodyMeasurements.where((m) {
           switch (_selectedMeasurementType) {
@@ -807,10 +739,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       );
     }
 
-    // Sort measurements by date
     filteredMeasurements.sort((a, b) => a.date.compareTo(b.date));
 
-    // Get measurement values based on selected type
     List<double> values =
         filteredMeasurements.map((m) {
           switch (_selectedMeasurementType) {
@@ -831,20 +761,17 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
           }
         }).toList();
 
-    // Find min and max values for chart scaling
     double minValue;
     double maxValue;
 
     if (values.length == 1) {
-      // If there's only one entry, set min and max to create a range around it
-      minValue = values[0] * 0.95; // 5% below
-      maxValue = values[0] * 1.05; // 5% above
+      minValue = values[0] * 0.95;
+      maxValue = values[0] * 1.05;
     } else {
       minValue = values.reduce((a, b) => a < b ? a : b);
       maxValue = values.reduce((a, b) => a > b ? a : b);
     }
 
-    // Add some padding to min and max for better visualization
     final chartMinValue = (minValue - 1.0).clamp(0.0, double.infinity);
     final chartMaxValue = maxValue + 1.0;
 
@@ -893,7 +820,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
     final shouldersController = TextEditingController();
     final noteController = TextEditingController();
 
-    // Get the most recent measurement if available to pre-fill values
     final latestMeasurement =
         _bodyMeasurements.isNotEmpty
             ? _bodyMeasurements.reduce((a, b) => a.date.isAfter(b.date) ? a : b)
@@ -989,7 +915,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  // Parse input values
                   final chest = double.tryParse(chestController.text.trim());
                   final waist = double.tryParse(waistController.text.trim());
                   final hips = double.tryParse(hipsController.text.trim());
@@ -999,7 +924,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                     shouldersController.text.trim(),
                   );
 
-                  // Validate that at least one measurement is provided
                   if (chest == null &&
                       waist == null &&
                       hips == null &&
@@ -1014,7 +938,6 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                     return;
                   }
 
-                  // Create body measurement entry
                   final measurement = BodyMeasurement(
                     userId: widget.userId,
                     date: DateTime.now(),
@@ -1030,10 +953,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                             : noteController.text.trim(),
                   );
 
-                  // Save to database
                   final id = await _dbHelper.insertBodyMeasurement(measurement);
                   if (id > 0) {
-                    // Reload data
                     _loadData();
 
                     Navigator.pop(context);
@@ -1093,65 +1014,49 @@ class WeightChartPainter extends CustomPainter {
 
     final path = Path();
 
-    // Handle single entry case
     if (weightEntries.length == 1) {
       final entry = weightEntries.first;
-      final x = size.width / 2; // Center the single point
+      final x = size.width / 2;
       final y = _calculateYPosition(entry.weight, size.height);
 
-      // Draw the point
       canvas.drawCircle(Offset(x, y), 5, pointPaint);
-
-      // Draw the weight value
       _drawWeightValue(canvas, entry.weight, x, y);
 
       return;
     }
 
-    // Calculate x and y positions for multiple entries
     final firstEntry = weightEntries.first;
     final firstX = 0.0;
     final firstY = _calculateYPosition(firstEntry.weight, size.height);
 
     path.moveTo(firstX, firstY);
 
-    // Draw points and connect with lines
     for (int i = 0; i < weightEntries.length; i++) {
       final entry = weightEntries[i];
       final x = i * (size.width / (weightEntries.length - 1));
       final y = _calculateYPosition(entry.weight, size.height);
 
-      // Draw line to this point
       if (i > 0) {
         path.lineTo(x, y);
       }
 
-      // Draw point
       canvas.drawCircle(Offset(x, y), 5, pointPaint);
 
-      // Draw weight value for each point
       _drawWeightValue(canvas, entry.weight, x, y);
     }
 
-    // Draw the path
     canvas.drawPath(path, paint);
 
-    // Draw min and max weight markers
     final labelPaint =
         Paint()
           ..color = Colors.grey[600]!
           ..style = PaintingStyle.fill;
 
-    // Draw min weight marker at bottom
     canvas.drawCircle(Offset(0, size.height), 3, labelPaint);
-
-    // Draw max weight marker at top
     canvas.drawCircle(Offset(0, 0), 3, labelPaint);
   }
 
-  // Helper method to draw weight value
   void _drawWeightValue(Canvas canvas, double weight, double x, double y) {
-    // Create a background for better readability
     final bgPaint =
         Paint()
           ..color = Colors.white.withOpacity(0.8)
@@ -1172,12 +1077,8 @@ class WeightChartPainter extends CustomPainter {
 
     final paragraph =
         paragraphBuilder.build()..layout(ui.ParagraphConstraints(width: 70));
-
-    // Position the text above the point
     final textX = x - paragraph.width / 2;
     final textY = y - paragraph.height - 10;
-
-    // Draw background with padding
     final padding = 4.0;
     final bgRect = Rect.fromLTWH(
       textX - padding,
@@ -1189,13 +1090,10 @@ class WeightChartPainter extends CustomPainter {
     final bgRRect = RRect.fromRectAndRadius(bgRect, const Radius.circular(4));
 
     canvas.drawRRect(bgRRect, bgPaint);
-
-    // Draw text
     canvas.drawParagraph(paragraph, Offset(textX, textY));
   }
 
   double _calculateYPosition(double weight, double height) {
-    // Invert y-axis (0 is at top in canvas)
     return height - ((weight - minWeight) / (maxWeight - minWeight) * height);
   }
 
@@ -1207,8 +1105,6 @@ class WeightChartPainter extends CustomPainter {
     return true;
   }
 }
-
-// WeightValuePainter class removed as we're now always showing weight values directly
 
 class MeasurementChartPainter extends CustomPainter {
   final List<BodyMeasurement> measurements;
@@ -1244,23 +1140,16 @@ class MeasurementChartPainter extends CustomPainter {
           ..style = PaintingStyle.fill;
 
     final path = Path();
-
-    // Handle single entry case
     if (measurements.length == 1) {
       final entry = measurements.first;
-      final x = size.width / 2; // Center the single point
+      final x = size.width / 2;
       final y = _calculateYPosition(_getMeasurementValue(entry), size.height);
-
-      // Draw the point
       canvas.drawCircle(Offset(x, y), 5, pointPaint);
-
-      // Draw the measurement value
       _drawMeasurementValue(canvas, _getMeasurementValue(entry), x, y);
 
       return;
     }
 
-    // Calculate x and y positions for multiple entries
     final firstEntry = measurements.first;
     final firstX = 0.0;
     final firstY = _calculateYPosition(
@@ -1269,30 +1158,22 @@ class MeasurementChartPainter extends CustomPainter {
     );
 
     path.moveTo(firstX, firstY);
-
-    // Draw points and connect with lines
     for (int i = 0; i < measurements.length; i++) {
       final entry = measurements[i];
       final x = i * (size.width / (measurements.length - 1));
       final y = _calculateYPosition(_getMeasurementValue(entry), size.height);
 
-      // Draw line to this point
       if (i > 0) {
         path.lineTo(x, y);
       }
-
-      // Draw point
       canvas.drawCircle(Offset(x, y), 5, pointPaint);
 
-      // Draw measurement value
       _drawMeasurementValue(canvas, _getMeasurementValue(entry), x, y);
     }
 
-    // Draw the path
     canvas.drawPath(path, paint);
   }
 
-  // Helper method to get measurement value based on type
   double _getMeasurementValue(BodyMeasurement measurement) {
     switch (measurementType) {
       case 'Chest':
@@ -1312,9 +1193,7 @@ class MeasurementChartPainter extends CustomPainter {
     }
   }
 
-  // Helper method to draw measurement value
   void _drawMeasurementValue(Canvas canvas, double value, double x, double y) {
-    // Create a background for better readability
     final bgPaint =
         Paint()
           ..color = Colors.white.withOpacity(0.8)
@@ -1336,11 +1215,9 @@ class MeasurementChartPainter extends CustomPainter {
     final paragraph =
         paragraphBuilder.build()..layout(ui.ParagraphConstraints(width: 70));
 
-    // Position the text above the point
     final textX = x - paragraph.width / 2;
     final textY = y - paragraph.height - 10;
 
-    // Draw background with padding
     final padding = 4.0;
     final bgRect = Rect.fromLTWH(
       textX - padding,
@@ -1352,13 +1229,10 @@ class MeasurementChartPainter extends CustomPainter {
     final bgRRect = RRect.fromRectAndRadius(bgRect, const Radius.circular(4));
 
     canvas.drawRRect(bgRRect, bgPaint);
-
-    // Draw text
     canvas.drawParagraph(paragraph, Offset(textX, textY));
   }
 
   double _calculateYPosition(double value, double height) {
-    // Invert y-axis (0 is at top in canvas)
     return height - ((value - minValue) / (maxValue - minValue) * height);
   }
 

@@ -10,7 +10,7 @@ import '../../models/user.dart';
 class MainApp extends StatefulWidget {
   final User user;
 
-  const MainApp({Key? key, required this.user}) : super(key: key);
+  const MainApp({super.key, required this.user});
 
   @override
   _MainAppState createState() => _MainAppState();
@@ -19,7 +19,6 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   int _currentIndex = 0;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-  bool _needsDashboardRefresh = false;
   final GlobalKey<DashboardScreenState> _dashboardKey =
       GlobalKey<DashboardScreenState>();
 
@@ -27,7 +26,6 @@ class _MainAppState extends State<MainApp> {
 
   void _onDataChanged() {
     setState(() {
-      _needsDashboardRefresh = true;
     });
   }
 
@@ -48,18 +46,15 @@ class _MainAppState extends State<MainApp> {
       ProgressChartsScreen(userId: widget.user.id!),
     ];
 
-    // Force initial data sync between food diary and dashboard
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncFoodDiaryWithDashboard();
     });
   }
 
-  // Method to sync food diary data with dashboard
   Future<void> _syncFoodDiaryWithDashboard() async {
     print("Syncing food diary data with dashboard");
     final dbHelper = DatabaseHelper.instance;
 
-    // Get all users to debug
     final db = await dbHelper.database;
     final users = await db.query('users');
     print('Found ${users.length} users in database');
@@ -67,7 +62,6 @@ class _MainAppState extends State<MainApp> {
       print('User: ${user['id']} - ${user['name']}');
     }
 
-    // Get all meal entries to debug
     final allEntries = await db.query('meal_entries');
     print('Total entries in meal_entries table: ${allEntries.length}');
     for (var entry in allEntries) {
@@ -76,9 +70,8 @@ class _MainAppState extends State<MainApp> {
       );
     }
 
-    // Try with user ID 1 (from logs)
     final calories = await dbHelper.getTotalCaloriesForDate(
-      widget.user.id!, // Fixed: Using actual user ID instead of hardcoded 1
+      widget.user.id!,
       DateTime.now(),
     );
 
@@ -92,7 +85,6 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // Handle back button press
         return !await _navigatorKey.currentState!.maybePop();
       },
       child: Scaffold(
@@ -110,18 +102,15 @@ class _MainAppState extends State<MainApp> {
                   _dashboardKey.currentState?.updateCaloriesConsumed(calories);
                 },
               );
-              // Switch to the nutrition tab
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 setState(() => _currentIndex = 1);
               });
             } else if (settings.name == '/activity_log') {
               page = ActivityLogScreen(userId: widget.user.id!);
-              // Switch to the activity tab
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 setState(() => _currentIndex = 2);
               });
             } else {
-              // Default to the current screen
               page = _screens[_currentIndex];
             }
 
@@ -135,21 +124,18 @@ class _MainAppState extends State<MainApp> {
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (index) {
-            // If we're already on this tab, pop to root
             if (index == _currentIndex) {
               _navigatorKey.currentState!.popUntil((route) => route.isFirst);
             }
 
-            // Always refresh dashboard when switching to it
             if (index == 0) {
               print("Switching to dashboard tab, refreshing data");
               Future.delayed(Duration(milliseconds: 100), () async {
-                // Get latest calories directly from database
                 final dbHelper = DatabaseHelper.instance;
                 final calories = await dbHelper.getTotalCaloriesForDate(
                   widget
                       .user
-                      .id!, // Fixed: Using actual user ID instead of hardcoded 1
+                      .id!,
                   DateTime.now(),
                 );
 
@@ -159,13 +145,11 @@ class _MainAppState extends State<MainApp> {
                 }
 
                 _dashboardKey.currentState?.refreshData();
-                _needsDashboardRefresh = false;
               });
             }
 
             setState(() => _currentIndex = index);
 
-            // Navigate to the root of the selected tab
             _navigatorKey.currentState!.pushNamedAndRemoveUntil(
               '/',
               (route) => false,

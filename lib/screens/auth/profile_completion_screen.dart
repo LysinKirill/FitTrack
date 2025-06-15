@@ -68,13 +68,11 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Calculate daily calorie goal based on user parameters
       int calorieGoal = widget.user.dailyCalorieGoal;
       final height = double.parse(_heightController.text);
       final weight = double.parse(_weightController.text);
 
       if (_selectedBirthDate != null) {
-        // Create temporary user for calorie calculation
         final tempUser = User(
           name: widget.user.name,
           email: widget.user.email,
@@ -91,7 +89,6 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         calorieGoal = CalorieCalculator.calculateDailyCalorieNeeds(tempUser);
       }
 
-      // Create user with updated information and calculated calorie goal
       final updatedUser = User(
         id: widget.user.id,
         name: widget.user.name,

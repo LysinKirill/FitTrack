@@ -72,14 +72,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 40),
-                    // App Logo or Icon
                     Icon(
                       Icons.fitness_center,
                       size: 80,
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(height: 24),
-                    // App Title
                     const Text(
                       'FitTrack',
                       style: TextStyle(
@@ -89,7 +87,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
-                    // Subtitle
                     Text(
                       'Your personal fitness assistant',
                       style: TextStyle(
@@ -101,7 +98,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 48),
-                    // Login Form Card
                     Card(
                       elevation: 4,
                       shape: RoundedRectangleBorder(
@@ -169,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               alignment: Alignment.centerRight,
                               child: TextButton(
                                 onPressed: () {
-                                  // Implement forgot password functionality
+                                  //TODO: Implement forgot password functionality
                                 },
                                 child: const Text('Forgot password?'),
                               ),
@@ -210,7 +206,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    // Register Button
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

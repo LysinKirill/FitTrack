@@ -34,8 +34,8 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
   @override
   void initState() {
     super.initState();
-    _userId = widget.userId; // Always use the user ID passed from the parent
-    _loadMealEntries(); // Load meal entries directly without _ensureUserExists
+    _userId = widget.userId;
+    _loadMealEntries();
   }
 
   Future<void> _loadMealEntries() async {
@@ -78,7 +78,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       _totalCarbs = carbs;
     });
 
-    // Notify parent about calories update
     if (widget.onCaloriesUpdated != null) {
       print('Directly updating calories: $calories');
       widget.onCaloriesUpdated!(calories);
@@ -86,7 +85,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       print('No onCaloriesUpdated callback provided');
     }
 
-    // Notify parent that data has changed
     if (widget.onDataChanged != null) {
       print('Notifying parent that data has changed');
       widget.onDataChanged!();
@@ -123,7 +121,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       await _loadMealEntries();
       print('Loaded ${_mealEntries.length} entries after adding');
 
-      // Notify parent about calories update
       if (widget.onCaloriesUpdated != null) {
         print('Directly updating calories: $_totalCalories');
         widget.onCaloriesUpdated!(_totalCalories);
@@ -131,7 +128,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
         print('No onCaloriesUpdated callback provided');
       }
 
-      // Notify parent that data has changed
       if (widget.onDataChanged != null) {
         print('Notifying parent that data has changed');
         widget.onDataChanged!();
@@ -145,21 +141,17 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     await _dbHelper.deleteMealEntry(id);
     _loadMealEntries();
 
-    // Notify parent about calories update
     if (widget.onCaloriesUpdated != null) {
       print('Directly updating calories: $_totalCalories');
       widget.onCaloriesUpdated!(_totalCalories);
     }
 
-    // Notify parent that data has changed
     if (widget.onDataChanged != null) {
       widget.onDataChanged!();
     }
   }
 
-  // Debug method to add a test meal entry
   Future<void> _addTestMealEntry() async {
-    // Use the selected date with current time
     final now = DateTime.now();
     final dateTime = DateTime(
       _selectedDate.year,
@@ -186,13 +178,11 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     await _loadMealEntries();
     print('Loaded ${_mealEntries.length} entries after adding test meal');
 
-    // Notify parent about calories update
     if (widget.onCaloriesUpdated != null) {
       print('Directly updating calories: $_totalCalories');
       widget.onCaloriesUpdated!(_totalCalories);
     }
 
-    // Notify parent that data has changed
     if (widget.onDataChanged != null) {
       widget.onDataChanged!();
     }
@@ -204,7 +194,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Group meal entries by meal type
     Map<String, List<MealEntry>> groupedEntries = {};
     for (var type in MealEntry.mealTypes) {
       groupedEntries[type] =
@@ -215,12 +204,10 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       appBar: AppBar(
         title: const Text('Food Diary'),
         actions: [
-          // Debug button to add test meal
           IconButton(
             icon: const Icon(Icons.bug_report),
             onPressed: _addTestMealEntry,
           ),
-          // Debug button to clear all entries
           IconButton(
             icon: const Icon(Icons.delete_forever),
             onPressed: () async {
@@ -240,7 +227,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
       ),
       body: Column(
         children: [
-          // Date display
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -279,7 +265,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             ),
           ),
 
-          // Nutrition summary card
           Card(
             margin: const EdgeInsets.all(16.0),
             child: Padding(
@@ -322,7 +307,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
             ),
           ),
 
-          // Meal entries list
           Expanded(
             child: ListView.builder(
               itemCount: MealEntry.mealTypes.length,
@@ -369,7 +353,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                           print('Added meal entry with ID: $id');
                           await _loadMealEntries();
 
-                          // Notify parent about calories update
                           if (widget.onCaloriesUpdated != null) {
                             print(
                               'Directly updating calories: $_totalCalories',
@@ -379,7 +362,6 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                             print('No onCaloriesUpdated callback provided');
                           }
 
-                          // Notify parent that data has changed
                           if (widget.onDataChanged != null) {
                             print('Notifying parent that data has changed');
                             widget.onDataChanged!();
@@ -592,7 +574,6 @@ class _AddMealDialogState extends State<AddMealDialog> {
         ElevatedButton(
           onPressed: () {
             if (_formKey.currentState!.validate()) {
-              // Use the selected date with current time
               final now = DateTime.now();
               final dateTime = DateTime(
                 widget.selectedDate.year,

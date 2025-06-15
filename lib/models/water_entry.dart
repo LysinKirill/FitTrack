@@ -2,7 +2,7 @@ import 'package:intl/intl.dart';
 
 class WaterEntry {
   final int? id;
-  final int amount; // in milliliters
+  final int amount;
   final DateTime dateTime;
   final int userId;
 
