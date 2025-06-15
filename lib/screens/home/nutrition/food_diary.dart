@@ -172,7 +172,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
 
     final testMeal = MealEntry(
       name: 'Test Food',
-      mealType: 'Завтрак',
+      mealType: 'Breakfast',
       calories: 300,
       proteins: 20.0,
       fats: 10.0,
@@ -199,7 +199,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Тестовая еда добавлена')));
+    ).showSnackBar(const SnackBar(content: Text('Test food added')));
   }
 
   @override
@@ -213,7 +213,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Дневник питания'),
+        title: const Text('Food Diary'),
         actions: [
           // Debug button to add test meal
           IconButton(
@@ -228,7 +228,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
               print('Cleared $count meal entries');
               _loadMealEntries();
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Удалено $count записей о приеме пищи')),
+                SnackBar(content: Text('Deleted $count meal entries')),
               );
             },
           ),
@@ -288,7 +288,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Дневная сводка',
+                    'Daily Summary',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
@@ -296,22 +296,22 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildNutrientColumn(
-                        'Калории',
+                        'Calories',
                         _totalCalories.toString(),
                         Colors.red,
                       ),
                       _buildNutrientColumn(
-                        'Белки',
+                        'Protein',
                         '${_totalProteins.toStringAsFixed(1)}г',
                         Colors.blue,
                       ),
                       _buildNutrientColumn(
-                        'Жиры',
+                        'Fats',
                         '${_totalFats.toStringAsFixed(1)}г',
                         Colors.yellow.shade800,
                       ),
                       _buildNutrientColumn(
-                        'Углеводы',
+                        'Carbs',
                         '${_totalCarbs.toStringAsFixed(1)}г',
                         Colors.green,
                       ),
@@ -337,7 +337,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                       Text(mealType),
                       if (entries.isNotEmpty)
                         Text(
-                          '${entries.fold<int>(0, (sum, entry) => sum + entry.calories)} ккал',
+                          '${entries.fold<int>(0, (sum, entry) => sum + entry.calories)} kcal',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 14,
@@ -350,7 +350,7 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
                     ...entries.map((entry) => _buildMealEntryTile(entry)),
                     ListTile(
                       leading: const Icon(Icons.add_circle_outline),
-                      title: const Text('Добавить еду'),
+                      title: const Text('Add Food'),
                       onTap: () async {
                         final result = await showDialog<MealEntry>(
                           context: context,
@@ -430,13 +430,13 @@ class _FoodDiaryScreenState extends State<FoodDiaryScreen> {
     return ListTile(
       title: Text(entry.name),
       subtitle: Text(
-        'Б: ${entry.proteins.toStringAsFixed(1)}г | Ж: ${entry.fats.toStringAsFixed(1)}г | У: ${entry.carbs.toStringAsFixed(1)}г',
+        'P: ${entry.proteins.toStringAsFixed(1)}g | F: ${entry.fats.toStringAsFixed(1)}g | C: ${entry.carbs.toStringAsFixed(1)}g',
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '${entry.calories} ккал',
+            '${entry.calories} kcal',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           IconButton(
@@ -471,7 +471,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
   final _fatsController = TextEditingController();
   final _carbsController = TextEditingController();
 
-  String _mealType = 'Завтрак';
+  String _mealType = 'Breakfast';
 
   @override
   void initState() {
@@ -494,7 +494,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Добавить еду'),
+      title: const Text('Add Food'),
       content: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -503,7 +503,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
             children: [
               DropdownButtonFormField<String>(
                 value: _mealType,
-                decoration: const InputDecoration(labelText: 'Тип приема пищи'),
+                decoration: const InputDecoration(labelText: 'Meal Type'),
                 items:
                     MealEntry.mealTypes.map((type) {
                       return DropdownMenuItem(value: type, child: Text(type));
@@ -516,66 +516,66 @@ class _AddMealDialogState extends State<AddMealDialog> {
               ),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Название еды'),
+                decoration: const InputDecoration(labelText: 'Food Name'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите название еды';
+                    return 'Please enter food name';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _caloriesController,
-                decoration: const InputDecoration(labelText: 'Калории'),
+                decoration: const InputDecoration(labelText: 'Calories'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите калории';
+                    return 'Please enter calories';
                   }
                   if (int.tryParse(value) == null) {
-                    return 'Пожалуйста, введите корректное число';
+                    return 'Please enter a valid number';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _proteinsController,
-                decoration: const InputDecoration(labelText: 'Белки (г)'),
+                decoration: const InputDecoration(labelText: 'Protein (g)'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите белки';
+                    return 'Please enter protein';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Пожалуйста, введите корректное число';
+                    return 'Please enter a valid number';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _fatsController,
-                decoration: const InputDecoration(labelText: 'Жиры (г)'),
+                decoration: const InputDecoration(labelText: 'Fats (g)'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите жиры';
+                    return 'Please enter fats';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Пожалуйста, введите корректное число';
+                    return 'Please enter a valid number';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _carbsController,
-                decoration: const InputDecoration(labelText: 'Углеводы (г)'),
+                decoration: const InputDecoration(labelText: 'Carbs (g)'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите углеводы';
+                    return 'Please enter carbs';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Пожалуйста, введите корректное число';
+                    return 'Please enter a valid number';
                   }
                   return null;
                 },
@@ -587,7 +587,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Отмена'),
+          child: const Text('Cancel'),
         ),
         ElevatedButton(
           onPressed: () {
@@ -615,7 +615,7 @@ class _AddMealDialogState extends State<AddMealDialog> {
               Navigator.of(context).pop(mealEntry);
             }
           },
-          child: const Text('Добавить'),
+          child: const Text('Add'),
         ),
       ],
     );

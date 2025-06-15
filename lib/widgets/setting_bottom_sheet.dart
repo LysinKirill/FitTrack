@@ -47,7 +47,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Профиль и цели',
+            'Profile and Goals',
             style: Theme.of(context).textTheme.titleLarge,
             textAlign: TextAlign.center,
           ),
@@ -55,7 +55,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
 
           // User info section
           Text(
-            'Информация о пользователе',
+            'User Information',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -67,9 +67,9 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
           TextField(
             controller: _weightController,
             decoration: const InputDecoration(
-              labelText: 'Текущий вес (кг)',
+              labelText: 'Current Weight (kg)',
               suffixIcon: Icon(Icons.monitor_weight),
-              hintText: 'Введите ваш текущий вес',
+              hintText: 'Enter your current weight',
             ),
             keyboardType: TextInputType.number,
           ),
@@ -77,7 +77,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
 
           // Daily goals section
           Text(
-            'Дневные цели',
+            'Daily Goals',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -89,7 +89,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
           TextField(
             controller: _calorieController,
             decoration: const InputDecoration(
-              labelText: 'Цель по калориям (ккал)',
+              labelText: 'Calorie Goal (kcal)',
               suffixIcon: Icon(Icons.local_fire_department),
             ),
             keyboardType: TextInputType.number,
@@ -99,7 +99,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
           TextField(
             controller: _waterController,
             decoration: const InputDecoration(
-              labelText: 'Цель по воде (мл)',
+              labelText: 'Water Goal (ml)',
               suffixIcon: Icon(Icons.water_drop),
             ),
             keyboardType: TextInputType.number,
@@ -119,10 +119,10 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                         SizedBox(width: 8),
-                        Text('Сохранение...'),
+                        Text('Saving...'),
                       ],
                     )
-                    : const Text('Сохранить изменения'),
+                    : const Text('Save Changes'),
           ),
 
           const SizedBox(height: 16),
@@ -133,7 +133,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
           ElevatedButton.icon(
             onPressed: _logout,
             icon: const Icon(Icons.logout),
-            label: const Text('Выйти из аккаунта'),
+            label: const Text('Logout'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
@@ -155,7 +155,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
 
     if (calorieGoal == null || waterGoal == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Пожалуйста, введите корректные числа')),
+        const SnackBar(content: Text('Please enter valid numbers')),
       );
       return;
     }
@@ -173,9 +173,9 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Цели успешно обновлены')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Goals successfully updated')),
+        );
         Navigator.pop(
           context,
           true,
@@ -185,7 +185,7 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Ошибка обновления целей: $e')));
+        ).showSnackBar(SnackBar(content: Text('Error updating goals: $e')));
       }
     } finally {
       if (mounted) {
@@ -218,9 +218,9 @@ class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка при выходе из аккаунта: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error logging out: $e')));
       }
     }
   }

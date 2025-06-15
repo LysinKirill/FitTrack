@@ -117,9 +117,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
           MaterialPageRoute(builder: (context) => MainApp(user: updatedUser)),
         );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка обновления профиля: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Profile update error: $e')));
       } finally {
         setState(() => _isLoading = false);
       }
@@ -129,7 +129,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Заполните ваш профиль')),
+      appBar: AppBar(title: const Text('Complete Your Profile')),
+      // Explicitly set bottomNavigationBar to null to ensure it doesn't appear
+      bottomNavigationBar: null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -138,23 +140,23 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Помогите нам персонализировать ваш опыт',
+                'Help us personalize your experience',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
               TextFormField(
                 controller: _heightController,
                 decoration: const InputDecoration(
-                  labelText: 'Рост (см)',
+                  labelText: 'Height (cm)',
                   prefixIcon: Icon(Icons.height),
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите ваш рост';
+                    return 'Please enter your height';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Пожалуйста, введите корректное число';
+                    return 'Please enter a valid number';
                   }
                   return null;
                 },
@@ -163,16 +165,16 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
               TextFormField(
                 controller: _weightController,
                 decoration: const InputDecoration(
-                  labelText: 'Вес (кг)',
+                  labelText: 'Weight (kg)',
                   prefixIcon: Icon(Icons.monitor_weight),
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите ваш вес';
+                    return 'Please enter your weight';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Пожалуйста, введите корректное число';
+                    return 'Please enter a valid number';
                   }
                   return null;
                 },
@@ -181,7 +183,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
               TextFormField(
                 controller: _birthDateController,
                 decoration: const InputDecoration(
-                  labelText: 'Дата рождения',
+                  labelText: 'Birth Date',
                   prefixIcon: Icon(Icons.cake),
                 ),
                 readOnly: true,
@@ -189,21 +191,21 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Пол',
+                'Gender',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               _buildGenderSelector(),
 
               const SizedBox(height: 16),
               const Text(
-                'Какова ваша цель?',
+                'What is your goal?',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               _buildFitnessGoalSelector(),
 
               const SizedBox(height: 16),
               const Text(
-                'Уровень активности',
+                'Activity Level',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               _buildActivityLevelSelector(),
@@ -215,7 +217,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                     child: const Padding(
                       padding: EdgeInsets.all(16.0),
                       child: Text(
-                        'СОХРАНИТЬ ПРОФИЛЬ',
+                        'SAVE PROFILE',
                         style: TextStyle(fontSize: 16),
                       ),
                     ),
@@ -232,7 +234,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       children: [
         Expanded(
           child: RadioListTile<String>(
-            title: const Text('Мужской'),
+            title: const Text('Male'),
             value: 'male',
             groupValue: _selectedGender,
             onChanged: (value) {
@@ -244,7 +246,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         ),
         Expanded(
           child: RadioListTile<String>(
-            title: const Text('Женский'),
+            title: const Text('Female'),
             value: 'female',
             groupValue: _selectedGender,
             onChanged: (value) {

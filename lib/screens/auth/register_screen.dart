@@ -36,7 +36,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (_passwordController.text != _confirmPasswordController.text) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Пароли не совпадают')));
+        ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
         return;
       }
 
@@ -48,7 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (emailExists) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Такой email уже существует')),
+          const SnackBar(content: Text('This email already exists')),
         );
         return;
       }
@@ -124,7 +124,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Ошибка регистрации')));
+        ).showSnackBar(const SnackBar(content: Text('Registration error')));
       }
     }
   }
@@ -133,10 +133,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Создать аккаунт'),
+        title: const Text('Create Account'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
       ),
+      // Explicitly set bottomNavigationBar to null to ensure it doesn't appear
+      bottomNavigationBar: null,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -158,14 +160,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   // Header
                   const Text(
-                    'Ваш путь к здоровью начинается здесь',
+                    'Your journey to health starts here',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
 
                   // Account Information Section
-                  _buildSectionHeader('Информация об аккаунте'),
+                  _buildSectionHeader('Account Information'),
                   Card(
                     elevation: 2,
                     margin: const EdgeInsets.only(bottom: 16),
@@ -176,13 +178,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _nameController,
                             decoration: const InputDecoration(
-                              labelText: 'Имя',
+                              labelText: 'Name',
                               prefixIcon: Icon(Icons.person),
                               border: OutlineInputBorder(),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Пожалуйста, введите ваше имя';
+                                return 'Please enter your name';
                               }
                               return null;
                             },
@@ -191,14 +193,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _emailController,
                             decoration: const InputDecoration(
-                              labelText: 'Эл. почта',
+                              labelText: 'Email',
                               prefixIcon: Icon(Icons.email),
                               border: OutlineInputBorder(),
                             ),
                             keyboardType: TextInputType.emailAddress,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Пожалуйста, введите вашу эл. почту';
+                                return 'Please enter your email';
                               }
                               return null;
                             },
@@ -207,17 +209,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _passwordController,
                             decoration: const InputDecoration(
-                              labelText: 'Пароль',
+                              labelText: 'Password',
                               prefixIcon: Icon(Icons.lock),
                               border: OutlineInputBorder(),
                             ),
                             obscureText: true,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Пожалуйста, введите пароль';
+                                return 'Please enter a password';
                               }
                               if (value.length < 6) {
-                                return 'Пароль должен содержать не менее 6 символов';
+                                return 'Password must be at least 6 characters';
                               }
                               return null;
                             },
@@ -226,14 +228,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _confirmPasswordController,
                             decoration: const InputDecoration(
-                              labelText: 'Подтвердите пароль',
+                              labelText: 'Confirm Password',
                               prefixIcon: Icon(Icons.lock_outline),
                               border: OutlineInputBorder(),
                             ),
                             obscureText: true,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Пожалуйста, подтвердите пароль';
+                                return 'Please confirm your password';
                               }
                               return null;
                             },
@@ -244,7 +246,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
 
                   // Physical Information Section
-                  _buildSectionHeader('Физические параметры'),
+                  _buildSectionHeader('Physical Parameters'),
                   Card(
                     elevation: 2,
                     margin: const EdgeInsets.only(bottom: 16),
@@ -256,7 +258,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _heightController,
                             decoration: const InputDecoration(
-                              labelText: 'Рост (см)',
+                              labelText: 'Height (cm)',
                               prefixIcon: Icon(Icons.height),
                               border: OutlineInputBorder(),
                             ),
@@ -266,7 +268,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _weightController,
                             decoration: const InputDecoration(
-                              labelText: 'Вес (кг)',
+                              labelText: 'Weight (kg)',
                               prefixIcon: Icon(Icons.monitor_weight),
                               border: OutlineInputBorder(),
                             ),
@@ -276,7 +278,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _birthDateController,
                             decoration: InputDecoration(
-                              labelText: 'Дата рождения',
+                              labelText: 'Birth Date',
                               prefixIcon: const Icon(Icons.calendar_today),
                               border: const OutlineInputBorder(),
                               suffixIcon: IconButton(
@@ -288,7 +290,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 16),
                           const Text(
-                            'Пол',
+                            'Gender',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -302,7 +304,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
 
                   // Fitness Goals Section
-                  _buildSectionHeader('Цели фитнеса'),
+                  _buildSectionHeader('Fitness Goals'),
                   Card(
                     elevation: 2,
                     margin: const EdgeInsets.only(bottom: 16),
@@ -312,7 +314,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Какова ваша цель?',
+                            'What is your goal?',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -322,7 +324,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           _buildFitnessGoalSelector(),
                           const SizedBox(height: 16),
                           const Text(
-                            'Уровень активности',
+                            'Activity Level',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -352,7 +354,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               Theme.of(context).colorScheme.onPrimary,
                         ),
                         child: const Text(
-                          'СОЗДАТЬ АККАУНТ',
+                          'CREATE ACCOUNT',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -387,7 +389,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       children: [
         Expanded(
           child: RadioListTile<String>(
-            title: const Text('Мужской'),
+            title: const Text('Male'),
             value: 'male',
             groupValue: _selectedGender,
             onChanged: (value) {
@@ -399,7 +401,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         Expanded(
           child: RadioListTile<String>(
-            title: const Text('Женский'),
+            title: const Text('Female'),
             value: 'female',
             groupValue: _selectedGender,
             onChanged: (value) {

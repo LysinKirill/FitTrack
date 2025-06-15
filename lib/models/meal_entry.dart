@@ -47,5 +47,5 @@ class MealEntry {
     );
   }
 
-  static List<String> mealTypes = ['Завтрак', 'Обед', 'Ужин', 'Перекус'];
+  static List<String> mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 }

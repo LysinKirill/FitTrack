@@ -36,9 +36,9 @@ class _LoginScreenState extends State<LoginScreen> {
           MaterialPageRoute(builder: (context) => MainApp(user: user)),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Неверные учетные данные')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Invalid credentials')));
       }
     }
   }
@@ -51,6 +51,8 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
       ),
+      // Explicitly set bottomNavigationBar to null to ensure it doesn't appear
+      bottomNavigationBar: null,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -91,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                     // Subtitle
                     Text(
-                      'Ваш персональный помощник для фитнеса',
+                      'Your personal fitness assistant',
                       style: TextStyle(
                         fontSize: 16,
                         color: Theme.of(
@@ -113,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Вход в аккаунт',
+                              'Account Login',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -124,14 +126,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             TextFormField(
                               controller: _emailController,
                               decoration: const InputDecoration(
-                                labelText: 'Эл. почта',
+                                labelText: 'Email',
                                 prefixIcon: Icon(Icons.email),
                                 border: OutlineInputBorder(),
                               ),
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Пожалуйста, введите вашу эл. почту';
+                                  return 'Please enter your email';
                                 }
                                 return null;
                               },
@@ -140,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             TextFormField(
                               controller: _passwordController,
                               decoration: InputDecoration(
-                                labelText: 'Пароль',
+                                labelText: 'Password',
                                 prefixIcon: const Icon(Icons.lock),
                                 suffixIcon: IconButton(
                                   icon: Icon(
@@ -159,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               obscureText: _obscurePassword,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Пожалуйста, введите ваш пароль';
+                                  return 'Please enter your password';
                                 }
                                 return null;
                               },
@@ -171,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onPressed: () {
                                   // Implement forgot password functionality
                                 },
-                                child: const Text('Забыли пароль?'),
+                                child: const Text('Forgot password?'),
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -198,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   child: const Text(
-                                    'ВОЙТИ',
+                                    'LOGIN',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -214,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('Нет аккаунта?'),
+                        const Text('Don\'t have an account?'),
                         TextButton(
                           onPressed: () {
                             Navigator.push(
@@ -227,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             );
                           },
-                          child: const Text('Создать аккаунт'),
+                          child: const Text('Create account'),
                         ),
                       ],
                     ),

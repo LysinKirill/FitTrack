@@ -26,8 +26,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
   late Future<User> _userFuture;
 
   // Time range selection
-  String _selectedTimeRange = 'Неделя';
-  final List<String> _timeRanges = ['Неделя', 'Месяц', '3 Месяца', 'Год'];
+  String _selectedTimeRange = 'Week';
+  final List<String> _timeRanges = ['Week', 'Month', '3 Months', 'Year'];
 
   // Data for charts
   List<WeightEntry> _weightEntries = [];
@@ -37,14 +37,14 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
   int? _hoveredPointIndex;
 
   // Selected body measurement type for chart
-  String _selectedMeasurementType = 'Талия';
+  String _selectedMeasurementType = 'Waist';
   final List<String> _measurementTypes = [
-    'Грудь',
-    'Талия',
-    'Бёдра',
-    'Бедра',
-    'Руки',
-    'Плечи',
+    'Chest',
+    'Waist',
+    'Hips',
+    'Thighs',
+    'Arms',
+    'Shoulders',
   ];
 
   @override
@@ -60,16 +60,16 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
 
     // Determine start date based on selected time range
     switch (_selectedTimeRange) {
-      case 'Неделя':
+      case 'Week':
         startDate = now.subtract(const Duration(days: 7));
         break;
-      case 'Месяц':
+      case 'Month':
         startDate = DateTime(now.year, now.month - 1, now.day);
         break;
-      case '3 Месяца':
+      case '3 Months':
         startDate = DateTime(now.year, now.month - 3, now.day);
         break;
-      case 'Год':
+      case 'Year':
         startDate = DateTime(now.year - 1, now.month, now.day);
         break;
       default:
@@ -188,7 +188,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
         child: Padding(
           padding: EdgeInsets.all(16.0),
           child: Text(
-            'Рост или вес не указаны',
+            'Height or weight not specified',
             style: TextStyle(color: Colors.grey),
           ),
         ),
@@ -204,16 +204,16 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
     Color color;
 
     if (bmi < 18.5) {
-      category = 'Недостаточный вес';
+      category = 'Underweight';
       color = Colors.blue;
     } else if (bmi < 25) {
-      category = 'Нормальный';
+      category = 'Normal';
       color = Colors.green;
     } else if (bmi < 30) {
-      category = 'Избыточный вес';
+      category = 'Overweight';
       color = Colors.orange;
     } else {
-      category = 'Ожирение';
+      category = 'Obese';
       color = Colors.red;
     }
 
@@ -280,7 +280,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Прогресс'),
+        title: const Text('Progress'),
         actions: [
           // Time range selector
           PopupMenuButton<String>(
@@ -307,7 +307,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Ошибка: ${snapshot.error}'));
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
 
           final user = snapshot.data!;
@@ -323,7 +323,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('Отслеживание веса и измерений'),
+          _buildSectionTitle('Weight and Measurements Tracking'),
 
           // Current weight card
           Card(
@@ -334,7 +334,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Текущий вес',
+                    'Current Weight',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -348,7 +348,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                       ),
                       const SizedBox(width: 16),
                       Text(
-                        '${user.weight?.toStringAsFixed(1) ?? "Не указан"} кг',
+                        '${user.weight?.toStringAsFixed(1) ?? "Not specified"} kg',
                         style: const TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -360,7 +360,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   Center(
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.add),
-                      label: const Text('Добавить запись веса'),
+                      label: const Text('Add Weight Entry'),
                       onPressed: () {
                         _showAddWeightDialog(context, user);
                       },
@@ -380,7 +380,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'История веса',
+                    'Weight History',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -399,7 +399,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Индекс массы тела (ИМТ)',
+                    'Body Mass Index (BMI)',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -411,7 +411,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
 
           // Body measurements section
           const SizedBox(height: 24),
-          _buildSectionTitle('Измерения тела'),
+          _buildSectionTitle('Body Measurements'),
 
           // Current measurements card
           Card(
@@ -422,7 +422,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Текущие измерения',
+                    'Current Measurements',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -431,7 +431,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   Center(
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.add),
-                      label: const Text('Добавить измерения'),
+                      label: const Text('Add Measurements'),
                       onPressed: () {
                         _showAddMeasurementsDialog(context, user);
                       },
@@ -454,7 +454,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'История измерений',
+                        'Measurement History',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -495,7 +495,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
 
   Widget _buildWeightHistoryChart() {
     if (_weightEntries.isEmpty) {
-      return _buildEmptyDataCard('Нет записей веса за этот период');
+      return _buildEmptyDataCard('No weight entries for this period');
     }
 
     // Sort entries by date
@@ -571,15 +571,15 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Добавить запись веса'),
+            title: const Text('Add Weight Entry'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: weightController,
                   decoration: const InputDecoration(
-                    labelText: 'Вес (кг)',
-                    hintText: 'Введите ваш вес в кг',
+                    labelText: 'Weight (kg)',
+                    hintText: 'Enter your weight in kg',
                   ),
                   keyboardType: TextInputType.number,
                 ),
@@ -587,8 +587,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                 TextField(
                   controller: noteController,
                   decoration: const InputDecoration(
-                    labelText: 'Заметка (необязательно)',
-                    hintText: 'Добавьте заметку к этой записи',
+                    labelText: 'Note (optional)',
+                    hintText: 'Add a note to this entry',
                   ),
                   maxLines: 2,
                 ),
@@ -597,7 +597,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена'),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -605,7 +605,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   final weightText = weightController.text.trim();
                   if (weightText.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Пожалуйста, введите вес')),
+                      const SnackBar(content: Text('Please enter weight')),
                     );
                     return;
                   }
@@ -614,7 +614,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   if (weight == null || weight <= 0) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Пожалуйста, введите корректный вес'),
+                        content: Text('Please enter a valid weight'),
                       ),
                     );
                     return;
@@ -659,18 +659,18 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Запись веса успешно добавлена'),
+                        content: Text('Weight entry successfully added'),
                       ),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Не удалось добавить запись веса'),
+                        content: Text('Failed to add weight entry'),
                       ),
                     );
                   }
                 },
-                child: const Text('Сохранить'),
+                child: const Text('Save'),
               ),
             ],
           ),
@@ -690,7 +690,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
         child: Padding(
           padding: EdgeInsets.all(16.0),
           child: Text(
-            'Нет данных об измерениях',
+            'No measurement data',
             style: TextStyle(color: Colors.grey),
           ),
         ),
@@ -703,37 +703,37 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       alignment: WrapAlignment.center,
       children: [
         _buildMeasurementItem(
-          'Грудь',
+          'Chest',
           latestMeasurement.chest,
           'см',
           Icons.accessibility_new,
         ),
         _buildMeasurementItem(
-          'Талия',
+          'Waist',
           latestMeasurement.waist,
           'см',
           Icons.straighten,
         ),
         _buildMeasurementItem(
-          'Бёдра',
+          'Hips',
           latestMeasurement.hips,
           'см',
           Icons.accessibility_new,
         ),
         _buildMeasurementItem(
-          'Бедра',
+          'Thighs',
           latestMeasurement.thighs,
           'см',
           Icons.accessibility_new,
         ),
         _buildMeasurementItem(
-          'Руки',
+          'Arms',
           latestMeasurement.arms,
           'см',
           Icons.fitness_center,
         ),
         _buildMeasurementItem(
-          'Плечи',
+          'Shoulders',
           latestMeasurement.shoulders,
           'см',
           Icons.accessibility_new,
@@ -777,7 +777,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
   // Helper method to build measurements history chart
   Widget _buildMeasurementsHistoryChart() {
     if (_bodyMeasurements.isEmpty) {
-      return _buildEmptyDataCard('Нет записей измерений за этот период');
+      return _buildEmptyDataCard('No measurement entries for this period');
     }
 
     // Filter measurements that have the selected measurement type
@@ -803,7 +803,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
 
     if (filteredMeasurements.isEmpty) {
       return _buildEmptyDataCard(
-        'Нет записей для ${_selectedMeasurementType.toLowerCase()} за этот период',
+        'No entries for ${_selectedMeasurementType.toLowerCase()} for this period',
       );
     }
 
@@ -912,7 +912,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Добавить измерения тела'),
+            title: const Text('Add Body Measurements'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -920,8 +920,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   TextField(
                     controller: chestController,
                     decoration: const InputDecoration(
-                      labelText: 'Грудь (см)',
-                      hintText: 'Введите обхват груди в см',
+                      labelText: 'Chest (cm)',
+                      hintText: 'Enter chest circumference in cm',
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -929,8 +929,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   TextField(
                     controller: waistController,
                     decoration: const InputDecoration(
-                      labelText: 'Талия (см)',
-                      hintText: 'Введите обхват талии в см',
+                      labelText: 'Waist (cm)',
+                      hintText: 'Enter waist circumference in cm',
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -938,8 +938,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   TextField(
                     controller: hipsController,
                     decoration: const InputDecoration(
-                      labelText: 'Бёдра (см)',
-                      hintText: 'Введите обхват бёдер в см',
+                      labelText: 'Hips (cm)',
+                      hintText: 'Enter hips circumference in cm',
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -947,8 +947,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   TextField(
                     controller: thighsController,
                     decoration: const InputDecoration(
-                      labelText: 'Бедра (см)',
-                      hintText: 'Введите обхват бедра в см',
+                      labelText: 'Thighs (cm)',
+                      hintText: 'Enter thigh circumference in cm',
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -956,8 +956,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   TextField(
                     controller: armsController,
                     decoration: const InputDecoration(
-                      labelText: 'Руки (см)',
-                      hintText: 'Введите обхват руки в см',
+                      labelText: 'Arms (cm)',
+                      hintText: 'Enter arm circumference in cm',
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -965,8 +965,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   TextField(
                     controller: shouldersController,
                     decoration: const InputDecoration(
-                      labelText: 'Плечи (см)',
-                      hintText: 'Введите ширину плеч в см',
+                      labelText: 'Shoulders (cm)',
+                      hintText: 'Enter shoulder width in cm',
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -974,8 +974,8 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                   TextField(
                     controller: noteController,
                     decoration: const InputDecoration(
-                      labelText: 'Заметка (необязательно)',
-                      hintText: 'Добавьте заметку к этой записи',
+                      labelText: 'Note (optional)',
+                      hintText: 'Add a note to this entry',
                     ),
                     maxLines: 2,
                   ),
@@ -985,7 +985,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена'),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -1008,9 +1008,7 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                       shoulders == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text(
-                          'Пожалуйста, введите хотя бы одно измерение',
-                        ),
+                        content: Text('Please enter at least one measurement'),
                       ),
                     );
                     return;
@@ -1041,18 +1039,18 @@ class _ProgressChartsScreenState extends State<ProgressChartsScreen> {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Измерения успешно добавлены'),
+                        content: Text('Measurements successfully added'),
                       ),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Не удалось добавить измерения'),
+                        content: Text('Failed to add measurements'),
                       ),
                     );
                   }
                 },
-                child: const Text('Сохранить'),
+                child: const Text('Save'),
               ),
             ],
           ),
@@ -1159,7 +1157,7 @@ class WeightChartPainter extends CustomPainter {
           ..color = Colors.white.withOpacity(0.8)
           ..style = PaintingStyle.fill;
 
-    final textValue = '${weight.toStringAsFixed(1)} кг';
+    final textValue = '${weight.toStringAsFixed(1)} kg';
 
     final paragraphBuilder =
         ui.ParagraphBuilder(
@@ -1297,17 +1295,17 @@ class MeasurementChartPainter extends CustomPainter {
   // Helper method to get measurement value based on type
   double _getMeasurementValue(BodyMeasurement measurement) {
     switch (measurementType) {
-      case 'Грудь':
+      case 'Chest':
         return measurement.chest ?? 0;
-      case 'Талия':
+      case 'Waist':
         return measurement.waist ?? 0;
-      case 'Бёдра':
+      case 'Hips':
         return measurement.hips ?? 0;
-      case 'Бедра':
+      case 'Thighs':
         return measurement.thighs ?? 0;
-      case 'Руки':
+      case 'Arms':
         return measurement.arms ?? 0;
-      case 'Плечи':
+      case 'Shoulders':
         return measurement.shoulders ?? 0;
       default:
         return 0.0;
@@ -1322,7 +1320,7 @@ class MeasurementChartPainter extends CustomPainter {
           ..color = Colors.white.withOpacity(0.8)
           ..style = PaintingStyle.fill;
 
-    final textValue = '${value.toStringAsFixed(1)} см';
+    final textValue = '${value.toStringAsFixed(1)} cm';
 
     final paragraphBuilder =
         ui.ParagraphBuilder(
